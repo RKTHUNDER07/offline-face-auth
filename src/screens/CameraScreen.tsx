@@ -9,20 +9,29 @@ import {Camera} from 'react-native-camera-kit';
 import FaceOverlay from '../components/FaceOverlay';
 import StatusBanner from '../components/StatusBanner';
 import {detectFaces} from '../services/faceDetection';
+import {isFaceCentered} from '../utils/faceAlignment';
 
 function CameraScreen(): JSX.Element {
     const [status, setStatus] = useState('Align your face');
     const cameraRef = useRef(null);
 
-    useEffect(() => {
-        setTimeout(() => {
-        setStatus('Face detected');
-            }, 3000);
+    // useEffect(() => {
+    //     setTimeout(() => {
+    //     setStatus('Face detected');
+    //         }, 3000);
 
-        setTimeout(() => {
-            setStatus('Authentication successful');
-        }, 6000);
-    }, []);
+    //     setTimeout(() => {
+    //         setStatus('Authentication successful');
+    //     }, 6000);
+    // }, []);
+
+//     useEffect(() => {
+//   const interval = setInterval(() => {
+//     handleFaceDetection();
+//   }, 1500);
+
+//   return () => clearInterval(interval);
+// }, []);
 
     const handleFaceDetection = async () => {
         try {
@@ -39,9 +48,15 @@ function CameraScreen(): JSX.Element {
             console.log('Detected faces:', faces);
 
             if (faces.length > 0) {
+            const centered = isFaceCentered(faces[0]);
+
+            if (centered) {
                 setStatus('Face detected');
             } else {
                 setStatus('Align your face');
+            }
+            } else {
+            setStatus('Align your face');
             }
         } catch (error) {
             console.log(error);
