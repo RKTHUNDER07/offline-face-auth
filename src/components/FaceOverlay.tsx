@@ -1,10 +1,21 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-function FaceOverlay(): JSX.Element {
+type Props = {
+  borderColor: string;
+};
+
+function FaceOverlay({borderColor}: Props): JSX.Element {
   return (
     <View style={styles.overlayContainer}>
-      <View style={styles.faceCircle} />
+      <View
+        style={[
+          styles.faceCircle,
+          {
+            borderColor,
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -22,7 +33,6 @@ const styles = StyleSheet.create({
     height: 260,
     borderRadius: 130,
     borderWidth: 4,
-    borderColor: '#00FF88',
     backgroundColor: 'transparent',
   },
 });

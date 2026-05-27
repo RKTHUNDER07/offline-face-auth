@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-ml-kit/face-detection": "^2.0.1",
     "react": "18.2.0",
     "react-native": "0.74.5",
     "react-native-camera-kit": "^18.0.0",
