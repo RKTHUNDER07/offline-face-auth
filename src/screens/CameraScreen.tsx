@@ -1,104 +1,32 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React from 'react';
+
 import {
-  StyleSheet,
-  Text,
   View,
-  TouchableOpacity,
+  StyleSheet,
 } from 'react-native';
-import {Camera} from 'react-native-camera-kit';
-import FaceOverlay from '../components/FaceOverlay';
-import StatusBanner from '../components/StatusBanner';
-import {detectFaces} from '../services/faceDetection';
-import {isFaceCentered} from '../utils/faceAlignment';
 
-function CameraScreen(): JSX.Element {
-    const [status, setStatus] = useState('Align your face');
-    const cameraRef = useRef(null);
+import {
+  Camera,
+  useCameraDevice,
+} from 'react-native-vision-camera';
 
-    // useEffect(() => {
-    //     setTimeout(() => {
-    //     setStatus('Face detected');
-    //         }, 3000);
+export default function CameraScreen() {
 
-    //     setTimeout(() => {
-    //         setStatus('Authentication successful');
-    //     }, 6000);
-    // }, []);
+  const device = useCameraDevice('front');
 
-//     useEffect(() => {
-//   const interval = setInterval(() => {
-//     handleFaceDetection();
-//   }, 1500);
-
-//   return () => clearInterval(interval);
-// }, []);
-
-    const handleFaceDetection = async () => {
-        try {
-            if (!cameraRef.current) {
-                return;
-            }
-
-            const image = await cameraRef.current.capture();
-
-            console.log('Captured image:', image);
-
-            const faces = await detectFaces(image.uri);
-
-            console.log('Detected faces:', faces);
-
-            if (faces.length > 0) {
-            const centered = isFaceCentered(faces[0]);
-
-            if (centered) {
-                setStatus('Face detected');
-            } else {
-                setStatus('Align your face');
-            }
-            } else {
-            setStatus('Align your face');
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-
-const getBorderColor = () => {
-  switch (status) {
-    case 'Align your face':
-      return '#FFD700';
-
-    case 'Face detected':
-      return '#00BFFF';
-
-    case 'Authentication successful':
-      return '#00FF88';
-
-    default:
-      return '#FFD700';
+  if (!device) {
+    return <View />;
   }
-};
-
 
   return (
-    
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>NHAI EdgeAuth</Text>
-      </View>
+
       <Camera
-            ref={cameraRef}
-            style={styles.camera}
-            cameraType={'front'}
-        />
-      <StatusBanner message={status} />
-      <TouchableOpacity
-             style={styles.button}
-            onPress={handleFaceDetection}>
-            <Text style={styles.buttonText}>Detect Face</Text>
-        </TouchableOpacity>
-        <FaceOverlay borderColor={getBorderColor()} />
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={true}
+      />
+
     </View>
   );
 }
@@ -106,35 +34,5 @@ const getBorderColor = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
   },
-  header: {
-    padding: 20,
-    backgroundColor: '#111',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
-  camera: {
-    flex: 1,
-  },
-  button: {
-  position: 'absolute',
-  bottom: 140,
-  alignSelf: 'center',
-  backgroundColor: '#00BFFF',
-  paddingHorizontal: 24,
-  paddingVertical: 14,
-  borderRadius: 14,
-},
-
-buttonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: 'bold',
-},
 });
-
-export default CameraScreen;

@@ -1,0 +1,5 @@
+export const ALIGNMENT_REQUIRED_FRAMES = 3;
+
+export const CHALLENGE_SUCCESS_FRAMES = 3;
+
+export const FACE_LOST_TIMEOUT = 2000;

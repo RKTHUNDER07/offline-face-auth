@@ -4,10 +4,16 @@ export function isFaceCentered(face: any) {
   const faceCenterX = frame.left + frame.width / 2;
   const faceCenterY = frame.top + frame.height / 2;
 
-  const screenCenterX = 540;
-  const screenCenterY = 1037;
+//   const screenCenterX = 540;
+//   const screenCenterY = 1037;
 
-  const threshold = 180;
+//   const threshold = 180;
+
+
+  const screenCenterX = 735;
+  const screenCenterY = 1165;
+
+  const threshold = 250;
 
   const isCenteredX =
     Math.abs(faceCenterX - screenCenterX) < threshold;
