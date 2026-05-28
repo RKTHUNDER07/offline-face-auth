@@ -1,30 +1,42 @@
-import { DetectionResult } from './detectionTypes';
+export interface NormalizedFace {
 
-export function normalizeDetection(face: any): DetectionResult {
-  if (!face) {
-    return {
-      hasFace: false,
-      timestamp: Date.now(),
-    };
-  }
+  yaw: number;
+
+  pitch: number;
+
+  roll: number;
+
+  faceWidth: number;
+
+  faceHeight: number;
+
+  centerX: number;
+
+  centerY: number;
+}
+
+export function normalizeDetection(
+  face: any,
+): NormalizedFace {
+
+  const frame = face.frame;
 
   return {
-    hasFace: true,
 
-    bounds: {
-      x: face.frame.left,
-      y: face.frame.top,
-      width: face.frame.width,
-      height: face.frame.height,
-    },
+    yaw: face.rotationY ?? 0,
 
-    rotationX: face.rotationX,
-    rotationY: face.rotationY,
-    rotationZ: face.rotationZ,
+    pitch: face.rotationX ?? 0,
 
-    faceWidth: face.frame.width,
-    faceHeight: face.frame.height,
+    roll: face.rotationZ ?? 0,
 
-    timestamp: Date.now(),
+    faceWidth: frame.width,
+
+    faceHeight: frame.height,
+
+    centerX:
+      frame.left + frame.width / 2,
+
+    centerY:
+      frame.top + frame.height / 2,
   };
 }
