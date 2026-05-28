@@ -1,14 +1,15 @@
+
 import { DetectionResult } from '../detection/detectionTypes';
 
 import { AuthState } from './authTypes';
 
 import { getRandomChallenge } from '../liveness/challengeEngine';
 
-import { validateLeftTurn } from '../liveness/leftTurnTest';
-
-import { validateRightTurn } from '../liveness/rightTurnTest';
-
-import { validateMoveCloser } from '../liveness/distanceTest';
+import {
+  isFacingLeft,
+  isFacingRight,
+  isCentered,
+} from '../liveness/validators';
 
 
 export function runAuthMachine(
@@ -20,39 +21,65 @@ export function runAuthMachine(
 
     case 'ALIGN':
 
-      if (!detection.hasFace) {
+      if (!detection.face) {
+
         return {
           ...currentState,
           message: 'No face detected',
         };
       }
 
+      if (
+        isCentered(detection.face)
+      ) {
+
+        return {
+          ...currentState,
+          phase: 'SELECT_CHALLENGE',
+          message: 'Face aligned',
+        };
+      }
+
       return {
         ...currentState,
-        phase: 'SELECT_CHALLENGE',
-        message: 'Face aligned',
+        message: 'Align your face',
       };
 
 
 
     case 'SELECT_CHALLENGE':
 
-      const challenge = getRandomChallenge();
+      // Prevent challenge reselection
+      if (
+        currentState.currentChallenge
+      ) {
+
+        return {
+          ...currentState,
+          phase: 'RUN_CHALLENGE',
+        };
+      }
+
+      const challenge =
+        getRandomChallenge();
 
       let instructionMessage = '';
 
       switch (challenge) {
 
         case 'LEFT_TURN':
-          instructionMessage = 'Turn your face left';
+
+          instructionMessage =
+            'Turn your face left';
+
           break;
+
 
         case 'RIGHT_TURN':
-          instructionMessage = 'Turn your face right';
-          break;
 
-        case 'MOVE_CLOSER':
-          instructionMessage = 'Move closer to camera';
+          instructionMessage =
+            'Turn your face right';
+
           break;
       }
 
@@ -67,20 +94,35 @@ export function runAuthMachine(
 
     case 'RUN_CHALLENGE':
 
+      if (!detection.face) {
+
+        return {
+          ...currentState,
+          message: 'Face lost',
+        };
+      }
+
       let passed = false;
 
-      switch (currentState.currentChallenge) {
+      switch (
+        currentState.currentChallenge
+      ) {
 
         case 'LEFT_TURN':
-          passed = validateLeftTurn(detection);
+
+          passed = isFacingLeft(
+            detection.face,
+          );
+
           break;
+
 
         case 'RIGHT_TURN':
-          passed = validateRightTurn(detection);
-          break;
 
-        case 'MOVE_CLOSER':
-          passed = validateMoveCloser(detection);
+          passed = isFacingRight(
+            detection.face,
+          );
+
           break;
       }
 
@@ -90,7 +132,9 @@ export function runAuthMachine(
           ...currentState,
           phase: 'SUCCESS',
           isAuthenticated: true,
-          message: 'Authentication successful',
+          currentChallenge: null,
+          message:
+            'Authentication successful',
         };
       }
 
@@ -105,6 +149,8 @@ export function runAuthMachine(
 
 
     default:
+
       return currentState;
   }
 }
+
