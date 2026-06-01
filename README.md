@@ -1,79 +1,462 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# EdgeAuth — Offline Biometric Attendance System
 
-# Getting Started
+## Overview
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+EdgeAuth is an offline-first biometric authentication system built with React Native.
 
-## Step 1: Start the Metro Server
+The project focuses on:
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+* Offline face registration
+* Liveness validation
+* Multi-angle embedding collection
+* Local SQLite persistence
+* Future offline attendance authentication
 
-To start Metro, run the following command from the _root_ of your React Native project:
+The system is designed for environments with unstable or unavailable internet connectivity.
 
-```bash
-# using npm
-npm start
+---
 
-# OR using Yarn
-yarn start
+# Current Features
+
+## Completed
+
+* React Native Android setup
+* VisionCamera integration
+* Real-time camera preview
+* Offline ML Kit face detection
+* Face alignment validation
+* Left / Right pose validation
+* Registration state machine
+* Multi-stage registration flow
+* Continuous embedding collection
+* SQLite local storage
+* Registration retrieval system
+* Re-registration detection
+* Offline persistence
+
+---
+
+# Registration Flow
+
+```text
+User Opens Registration
+        ↓
+Check Existing Registration
+        ↓
+Already Registered?
+   ↙             ↘
+YES               NO
+↓                  ↓
+Show              Start
+Re-Register       Registration
+Button            Flow
 ```
 
-## Step 2: Start your Application
+---
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+# Registration Pipeline
 
-### For Android
-
-```bash
-# using npm
-npm run android
-
-# OR using Yarn
-yarn android
+```text
+Camera Preview
+        ↓
+Face Detection
+        ↓
+Face Normalization
+        ↓
+Registration State Machine
+        ↓
+Pose Validation
+        ↓
+Embedding Collection
+        ↓
+SQLite Persistence
+        ↓
+Registration Success
 ```
 
-### For iOS
+---
 
-```bash
-# using npm
-npm run ios
+# Detailed Registration Flow
 
-# OR using Yarn
-yarn ios
+## 1. ALIGN
+
+User aligns face inside circular frame.
+
+Validation:
+
+* Face detected
+* Face close enough
+* Face centered
+
+---
+
+## 2. CENTER HOLD
+
+User holds center pose for a few seconds.
+
+Purpose:
+
+* Stable frontal embeddings
+* Better face quality
+* Lighting stabilization
+
+Embeddings are continuously generated.
+
+---
+
+## 3. LEFT HOLD
+
+User turns face left.
+
+Purpose:
+
+* Multi-angle biometric coverage
+* Improve future authentication robustness
+
+Embeddings continue generating.
+
+---
+
+## 4. RIGHT HOLD
+
+User turns face right.
+
+Purpose:
+
+* Capture additional facial geometry
+* Improve real-world attendance matching
+
+Embeddings continue generating.
+
+---
+
+## 5. SUCCESS
+
+After successful validation:
+
+* Camera closes
+* Registration finalizes
+* Embeddings saved locally
+* Registration marked complete
+
+---
+
+# Embedding Architecture
+
+## Current State
+
+Current embeddings are MOCK embeddings.
+
+Example:
+
+```ts
+Array.from({ length: 128 }, () => Math.random())
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+This validates:
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+* pipeline architecture
+* storage flow
+* retrieval flow
+* registration lifecycle
 
-## Step 3: Modifying your App
+---
 
-Now that you have successfully run the app, let's modify it.
+## Planned Real Embedding Pipeline
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+```text
+Camera Capture
+        ↓
+Face Detection
+        ↓
+Face Crop
+        ↓
+Image Normalization
+        ↓
+TFLite FaceNet / MobileFaceNet
+        ↓
+Real Embedding Vector
+        ↓
+Embedding Averaging
+        ↓
+SQLite Storage
+```
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+---
 
-## Congratulations! :tada:
+# SQLite Persistence Flow
 
-You've successfully run and modified your React Native App. :partying_face:
+```text
+Registration Success
+        ↓
+saveRegistration()
+        ↓
+SQLite Insert
+        ↓
+Persistent Local Storage
+        ↓
+getRegistration()
+        ↓
+Offline Retrieval
+```
 
-### Now what?
+---
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+# Current File Structure
 
-# Troubleshooting
+```text
+src/
+│
+├── core/
+│   │
+│   ├── auth/
+│   │   └── liveness/
+│   │       └── validators.ts
+│   │
+│   ├── detection/
+│   │   └── normalizeDetection.ts
+│   │
+│   ├── embeddings/
+│   │   └── generateEmbedding.ts
+│   │
+│   ├── registration/
+│   │   ├── registrationMachine.ts
+│   │   └── registrationEmbeddings.ts
+│   │
+│   └── storage/
+│       ├── database.ts
+│       ├── initDatabase.ts
+│       ├── saveRegistration.ts
+│       ├── getRegistration.ts
+│       └── getAllRegistrations.ts
+│
+├── screens/
+│   ├── HomeScreen.tsx
+│   ├── RegistrationScreen.tsx
+│   └── RegistrationCameraScreen.tsx
+│
+└── App.tsx
+```
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+---
 
-# Learn More
+# Important Core Components
 
-To learn more about React Native, take a look at the following resources:
+## Registration Machine
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+File:
+
+```text
+core/registration/registrationMachine.ts
+```
+
+Responsible for:
+
+* registration stages
+* pose validation
+* user guidance
+* stage transitions
+
+---
+
+## Embedding Collector
+
+File:
+
+```text
+core/embeddings/generateEmbedding.ts
+```
+
+Responsible for:
+
+* embedding generation
+* continuous embedding collection
+* future real embedding integration
+
+---
+
+## SQLite Layer
+
+Files:
+
+```text
+core/storage/
+```
+
+Responsible for:
+
+* database initialization
+* local persistence
+* retrieval
+* offline registration state
+
+---
+
+# Technologies Used
+
+| Technology            | Purpose                |
+| --------------------- | ---------------------- |
+| React Native          | Mobile application     |
+| VisionCamera          | Camera pipeline        |
+| ML Kit Face Detection | Offline face detection |
+| SQLite                | Offline persistence    |
+| TypeScript            | Type safety            |
+| Hermes                | React Native JS engine |
+
+---
+
+# Current Technical Decisions
+
+## Why SQLite?
+
+SQLite provides:
+
+* offline persistence
+* fast local retrieval
+* lightweight storage
+* no internet dependency
+
+Perfect for offline attendance systems.
+
+---
+
+## Why Continuous Embeddings?
+
+Instead of storing a single embedding:
+
+* multiple embeddings improve robustness
+* captures different angles
+* improves future authentication accuracy
+
+---
+
+## Why Left / Right Validation?
+
+Real-world attendance conditions vary.
+
+Multi-angle registration:
+
+* improves recognition stability
+* reduces pose dependency
+* increases authentication success rate
+
+---
+
+# Current Limitations
+
+## Mock Embeddings
+
+Real face embeddings are not implemented yet.
+
+Current embeddings are placeholder vectors.
+
+---
+
+## No Authentication Pipeline Yet
+
+Attendance authentication is planned but not implemented.
+
+---
+
+## No Real-Time Frame Processing Yet
+
+Current implementation:
+
+* captures photos periodically
+* runs ML Kit on captured images
+
+Future versions may use:
+
+* VisionCamera frame processors
+* real-time inference
+
+---
+
+# Future Roadmap
+
+## Phase 1 — Current
+
+* Offline registration
+* SQLite persistence
+* Registration pipeline
+
+---
+
+## Phase 2
+
+* Real TFLite embeddings
+* Face cropping pipeline
+* Embedding averaging
+
+---
+
+## Phase 3
+
+* Cosine similarity matching
+* Offline attendance authentication
+
+---
+
+## Phase 4
+
+* Realtime frame processing
+* Faster inference pipeline
+* Optimization layer
+
+---
+
+## Phase 5
+
+* Secure encryption
+* Multi-user support
+* Admin dashboard
+* Sync architecture
+
+---
+
+# Planned Authentication Flow
+
+```text
+Open Attendance
+        ↓
+Live Face Detection
+        ↓
+Liveness Validation
+        ↓
+Generate Live Embedding
+        ↓
+Fetch Stored Embedding
+        ↓
+Cosine Similarity Match
+        ↓
+Attendance Success / Failure
+```
+
+---
+
+# Project Status
+
+Current status:
+
+## Stable MVP Registration System
+
+Working:
+
+* Camera
+* Face detection
+* Pose validation
+* Registration flow
+* Embedding collection
+* SQLite persistence
+* Retrieval system
+
+Next milestone:
+
+* Real biometric embeddings
+
+---
+
+# Author
+
+Built as part of an offline-first biometric attendance system hackathon project.
+"""
