@@ -1,5 +1,9 @@
-import React from 'react';
+import React, {
+  useEffect,} from 'react';
 
+import {
+  initDatabase,
+} from './src/core/storage/initDatabase';
 import {
   NavigationContainer,
 } from '@react-navigation/native';
@@ -21,6 +25,11 @@ const Stack =
 
 
 function App(): JSX.Element {
+  useEffect(() => {
+
+  initDatabase();
+
+}, []);
 
   return (
 

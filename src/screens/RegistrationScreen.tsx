@@ -1,48 +1,64 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 
-export default function RegistrationScreen({
-  navigation,
-}: any) {
+import {getRegistration} from '../core/storage/getRegistration';
+
+export default function RegistrationScreen({navigation}: any) {
+  const [isRegistered, setIsRegistered] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkRegistration();
+  }, []);
+
+  const checkRegistration = async () => {
+    try {
+      const registration = await getRegistration('demo-user');
+
+      if (registration) {
+        console.log('USER ALREADY REGISTERED');
+
+        setIsRegistered(true);
+      }
+    } catch (error) {
+      console.log('CHECK REGISTRATION ERROR:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Checking Registration...</Text>
+      </View>
+    );
+  }
 
   return (
-
     <View style={styles.container}>
-
-      <Text style={styles.title}>
-        Biometric Registration
-      </Text>
+      <Text style={styles.title}>Biometric Registration</Text>
 
       <Text style={styles.subtitle}>
-        Register your face
-        for offline attendance
+        {isRegistered
+          ? 'You are already registered'
+          : 'Register your face for offline attendance'}
       </Text>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() =>
-          navigation.navigate(
-            'RegistrationCamera',
-          )
-        }
-      >
+        onPress={() => navigation.navigate('RegistrationCamera')}>
         <Text style={styles.buttonText}>
-          Start Registration
+          {isRegistered ? 'Re-Register' : 'Start Registration'}
         </Text>
       </TouchableOpacity>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     justifyContent: 'center',

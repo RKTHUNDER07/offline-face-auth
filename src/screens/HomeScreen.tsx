@@ -1,56 +1,35 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-
-export default function HomeScreen({
-  navigation,
-}: any) {
-
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import {getRegistration} from '../core/storage/getRegistration';
+export default function HomeScreen({navigation}: any) {
+  useEffect(() => {
+    const checkRegistration = async () => {
+      const data = await getRegistration('demo-user');
+      console.log('HOME REGISTRATION:', data);
+    };
+    checkRegistration();
+  }, []);
   return (
-
     <View style={styles.container}>
-
-      <Text style={styles.title}>
-        EdgeAuth
-      </Text>
+      <Text style={styles.title}>EdgeAuth</Text>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() =>
-          navigation.navigate(
-            'Registration',
-          )
-        }
-      >
-        <Text style={styles.buttonText}>
-          Register
-        </Text>
+        onPress={() => navigation.navigate('Registration')}>
+        <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() =>
-          navigation.navigate(
-            'Camera',
-          )
-        }
-      >
-        <Text style={styles.buttonText}>
-          Attendance
-        </Text>
+        onPress={() => navigation.navigate('Camera')}>
+        <Text style={styles.buttonText}>Attendance</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     justifyContent: 'center',
