@@ -21,6 +21,8 @@ export interface RegistrationState {
   message: string;
 
   circleColor: string;
+
+  stageStartedAt: number;
 }
 
 
@@ -28,7 +30,7 @@ export function runRegistrationMachine(
   state: RegistrationState,
   face: NormalizedFace,
 ): RegistrationState {
-
+  const now = Date.now();
   // TOO FAR
   if (
     !isCloseEnough(face)
@@ -66,90 +68,155 @@ export function runRegistrationMachine(
       stage: 'CENTER',
       message: 'Look Center',
       circleColor: '#22c55e',
+      stageStartedAt: Date.now(),
     };
   }
 
 
   // CENTER
+  
+if (
+  state.stage === 'CENTER'
+) {
+
+  const elapsed =
+    now -
+    state.stageStartedAt;
+
   if (
-    state.stage === 'CENTER'
+    elapsed >= 8000
   ) {
 
-    if (
-      isCentered(face)
-    ) {
-
-      console.log(
-        'CENTER STORED',
-      );
-
-      return {
-        stage: 'LEFT',
-        message: 'Look Left',
-        circleColor: '#22c55e',
-      };
-    }
-
     return {
-      ...state,
-      message: 'Look Center',
+
+      stage: 'LEFT',
+
+      message:
+        'Look Left',
+
+      circleColor:
+        'yellow',
+
+      stageStartedAt:
+        now,
     };
   }
+
+  return {
+
+    ...state,
+
+    message:
+      `Hold Center ${Math.ceil(
+        (8000 - elapsed) / 1000,
+      )}`,
+  };
+}
 
 
   // LEFT
+if (
+  state.stage === 'LEFT'
+) {
+
   if (
-    state.stage === 'LEFT'
+    !isFacingLeft(face)
   ) {
 
-    if (
-      isFacingLeft(face)
-    ) {
-
-      console.log(
-        'LEFT STORED',
-      );
-
-      return {
-        stage: 'RIGHT',
-        message: 'Look Right',
-        circleColor: '#22c55e',
-      };
-    }
-
     return {
+
       ...state,
-      message: 'Turn Left',
+
+      message:
+        'Turn Left',
     };
   }
 
+  const elapsed =
+    now -
+    state.stageStartedAt;
+
+  if (
+    elapsed >= 5000
+  ) {
+
+    return {
+
+      stage: 'RIGHT',
+
+      message:
+        'Look Right',
+
+      circleColor:
+        'yellow',
+
+      stageStartedAt:
+        now,
+    };
+  }
+
+  return {
+
+    ...state,
+
+    message:
+      `Hold Left ${Math.ceil(
+        (5000 - elapsed) / 1000,
+      )}`,
+  };
+}
 
   // RIGHT
+if (
+  state.stage === 'RIGHT'
+) {
+
   if (
-    state.stage === 'RIGHT'
+    !isFacingRight(face)
   ) {
 
-    if (
-      isFacingRight(face)
-    ) {
-
-      console.log(
-        'RIGHT STORED',
-      );
-
-      return {
-        stage: 'SUCCESS',
-        message:
-          'Registration Success',
-        circleColor: '#22c55e',
-      };
-    }
-
     return {
+
       ...state,
-      message: 'Turn Right',
+
+      message:
+        'Turn Right',
     };
   }
+
+  const elapsed =
+    now -
+    state.stageStartedAt;
+
+  if (
+    elapsed >= 5000
+  ) {
+
+    return {
+
+      stage: 'SUCCESS',
+
+      message:
+        'Registration Success',
+
+      circleColor:
+        '#22c55e',
+
+      stageStartedAt:
+        now,
+    };
+  }
+
+  return {
+
+    ...state,
+
+    message:
+      `Hold Right ${Math.ceil(
+        (5000 - elapsed) / 1000,
+      )}`,
+  };
+}
 
 
   return state;

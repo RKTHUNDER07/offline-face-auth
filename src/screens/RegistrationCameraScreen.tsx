@@ -12,14 +12,23 @@ import {
 } from 'react-native';
 
 import { runRegistrationMachine, } from '../core/registration/registrationMachine';
- import { normalizeDetection, } from '../core/detection/normalizeDetection';
+
+import { normalizeDetection, } from '../core/detection/normalizeDetection';
+
 import {
   Camera,
   useCameraDevice,
 } from 'react-native-vision-camera';
 
+import { generateEmbedding, } from '../core/embeddings/generateEmbedding';
+
 import FaceDetection
+
 from '@react-native-ml-kit/face-detection';
+
+import { createEmptyEmbeddings, } from '../core/registration/registrationEmbeddings'; 
+
+import { isCentered, isCloseEnough, } from '../core/liveness/validators';
 
 
 export default function RegistrationCameraScreen() {
@@ -34,95 +43,155 @@ export default function RegistrationCameraScreen() {
     setHasPermission] =
       useState(false);
 
-    const [registrationState, setRegistrationState] = useState({ stage: 'ALIGN', message: 'Align Face', circleColor: 'red', });
+    const [registrationState, setRegistrationState] = useState({ stage: 'ALIGN', message: 'Align Face', circleColor: 'red', stageStartedAt: Date.now(), });
 
 
-  useEffect(() => {
+    const [embeddings,setEmbeddings] =useState<any[]>([]);
 
-    const requestPermission =
+    const previousStageRef = useRef( registrationState.stage, );
+    const lastEmbeddingCaptureRef = useRef(0);
+    const [ registrationEmbeddings, setRegistrationEmbeddings, ] = useState( createEmptyEmbeddings(), );
+    useEffect(() => {
+      
+      const requestPermission =
       async () => {
-
+        
         const permission =
-          await Camera.requestCameraPermission();
-
+        await Camera.requestCameraPermission();
+        
         setHasPermission(
           permission === 'granted',
         );
       };
-
-    requestPermission();
-
-  }, []);
-
-
-  useEffect(() => {
-
-    let interval:
+      
+      requestPermission();
+      
+    }, []);
+    
+    
+    useEffect(() => {
+      
+      let interval:
       NodeJS.Timeout;
-
-    interval = setInterval(
-      async () => {
-
-        try {
-
-          const photo =
+      
+      interval = setInterval(
+        async () => {
+          
+          try {
+            
+            const photo =
             await cameraRef.current?.takePhoto({
               qualityPrioritization:
-                'speed',
-
+              'speed',
+              
               flash: 'off',
-
+              
               enableShutterSound:
-                false,
+              false,
             });
-
-          if (!photo?.path) {
-            return;
-          }
-
-          const faces =
+            
+            if (!photo?.path) {
+              return;
+            }
+            
+            const faces =
             await FaceDetection.detect(
               `file://${photo.path}`,
             );
-
-
-          // NO FACE
-          if (
-            faces.length === 0
-          ) {
-
-           
-setRegistrationState(
-  prev => ({
-    ...prev,
-    message:
-      'No Face Detected',
-    circleColor: 'red',
-  }),
-);
-    return;
-
-          }
-
-
-          // FACE FOUND
-          
-
+            
+            
+            // NO FACE
+            if (
+              faces.length === 0
+            ) {
+              
+              
+              setRegistrationState(
+                prev => ({
+                  ...prev,
+                  message:
+                  'No Face Detected',
+                  circleColor: 'red',
+                }),
+              );
+              return;
+              
+            }
+            
+            
+            // FACE FOUND
+            
+            
             const normalizedFace =
             normalizeDetection(
-                faces[0],
+              faces[0],
             );
+            
+            //------------------------------------------------------------------------
+            
+const now = Date.now();
 
+const canCaptureEmbedding =
+  now -
+  lastEmbeddingCaptureRef.current >
+  500;
+
+
+const validForEmbedding =
+  isCentered(
+    normalizedFace,
+  ) &&
+  isCloseEnough(
+    normalizedFace,
+  );
+
+
+if (
+  canCaptureEmbedding &&
+  validForEmbedding
+) {
+
+  lastEmbeddingCaptureRef.current =
+    now;
+
+  generateEmbedding(
+    photo.path,
+  ).then(embedding => {
+
+    setRegistrationEmbeddings(
+      prev => {
+
+        const updated = {
+
+          embeddings: [
+            ...prev.embeddings,
+            embedding,
+          ],
+        };
+
+        console.log(
+          'TOTAL EMBEDDINGS:',
+          updated.embeddings.length,
+        );
+
+        return updated;
+      },
+    );
+  });
+}
+
+
+            //----------------------------------------------------------------------  
             setRegistrationState(
-            prevState =>
+              prevState =>
                 runRegistrationMachine(
-                prevState,
-                normalizedFace,
+                  prevState,
+                  normalizedFace,
                 ),
-            );
-
-
-
+              );
+              
+              
+              
 
         } catch (error) {
 
@@ -133,16 +202,17 @@ setRegistrationState(
         }
 
       },
-      1500,
+      700,
     );
 
     return () => {
-
+      
       clearInterval(interval);
     };
-
+    
   }, []);
-
+  
+  useEffect(() => { if ( registrationState.stage === 'SUCCESS' ) { console.log( 'FINAL EMBEDDINGS:', registrationEmbeddings, ); } }, [ registrationState.stage, ]);
 
   if (!hasPermission) {
 
@@ -168,7 +238,6 @@ setRegistrationState(
   if (!device) {
     return <View />;
   }
-
 
   return (
 
