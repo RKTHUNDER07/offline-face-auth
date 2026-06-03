@@ -1,67 +1,45 @@
-import React, {
-  useEffect,} from 'react';
+import React, {useEffect} from 'react';
 
-import {
-  initDatabase,
-} from './src/core/storage/initDatabase';
-import {
-  NavigationContainer,
-} from '@react-navigation/native';
+import {loadEmbeddingModel} from './src/core/embeddings/loadModel';
+import {initDatabase} from './src/core/storage/initDatabase';
+import {NavigationContainer} from '@react-navigation/native';
 
-import {
-  createNativeStackNavigator,
-} from '@react-navigation/native-stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import HomeScreen from './src/screens/HomeScreen';
 
 import CameraScreen from './src/screens/CameraScreen';
 
 import RegistrationScreen from './src/screens/RegistrationScreen';
-import RegistrationCameraScreen
-from './src/screens/RegistrationCameraScreen';
+import RegistrationCameraScreen from './src/screens/RegistrationCameraScreen';
 
-const Stack =
-  createNativeStackNavigator();
-
+const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
   useEffect(() => {
-
-  initDatabase();
-
-}, []);
+    initDatabase();
+  }, []);
+  useEffect(() => {
+    loadEmbeddingModel();
+  }, []);
 
   return (
-
     <NavigationContainer>
-
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-        }}
-      >
+        }}>
+        <Stack.Screen name="Home" component={HomeScreen} />
 
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-        />
+        <Stack.Screen name="Registration" component={RegistrationScreen} />
 
-        <Stack.Screen
-          name="Registration"
-          component={RegistrationScreen}
-        />
-
-        <Stack.Screen
-          name="Camera"
-          component={CameraScreen}
-        />
+        <Stack.Screen name="Camera" component={CameraScreen} />
 
         <Stack.Screen
           name="RegistrationCamera"
           component={RegistrationCameraScreen}
         />
       </Stack.Navigator>
-
     </NavigationContainer>
   );
 }
