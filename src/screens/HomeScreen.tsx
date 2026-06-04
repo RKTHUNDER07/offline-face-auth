@@ -5,8 +5,9 @@ import {getRegistration} from '../core/storage/getRegistration';
 export default function HomeScreen({navigation}: any) {
   useEffect(() => {
     const checkRegistration = async () => {
-      const data = await getRegistration('demo-user');
-      console.log('HOME REGISTRATION:', data);
+      const registration = await getRegistration('demo-user');
+      console.log('HOME REGISTRATION FOUND:', !!registration);
+      console.log('EMBEDDING COUNT:', registration?.embeddings?.length);
     };
     checkRegistration();
   }, []);
@@ -22,7 +23,12 @@ export default function HomeScreen({navigation}: any) {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Camera')}>
+        onPress={() => navigation.navigate('EmbeddingTest')}>
+        <Text style={styles.buttonText}>Test Embeddings</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Attendance')}>
         <Text style={styles.buttonText}>Attendance</Text>
       </TouchableOpacity>
     </View>

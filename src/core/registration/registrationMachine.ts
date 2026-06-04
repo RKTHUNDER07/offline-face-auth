@@ -1,10 +1,10 @@
-
-
-import { isCentered, isFacingLeft, isFacingRight, isCloseEnough, } from '../liveness/validators';
 import {
-  NormalizedFace,
-} from '../detection/normalizeDetection';
-
+  isCentered,
+  isFacingLeft,
+  isFacingRight,
+  isCloseEnough,
+} from '../liveness/validators';
+import {NormalizedFace} from '../detection/normalizeDetection';
 
 export type RegistrationStage =
   | 'ALIGN'
@@ -13,9 +13,7 @@ export type RegistrationStage =
   | 'RIGHT'
   | 'SUCCESS';
 
-
 export interface RegistrationState {
-
   stage: RegistrationStage;
 
   message: string;
@@ -25,17 +23,13 @@ export interface RegistrationState {
   stageStartedAt: number;
 }
 
-
 export function runRegistrationMachine(
   state: RegistrationState,
   face: NormalizedFace,
 ): RegistrationState {
   const now = Date.now();
   // TOO FAR
-  if (
-    !isCloseEnough(face)
-  ) {
-
+  if (!isCloseEnough(face)) {
     return {
       ...state,
       message: 'Move Closer',
@@ -43,16 +37,9 @@ export function runRegistrationMachine(
     };
   }
 
-
   // ALIGN
-  if (
-    state.stage === 'ALIGN'
-  ) {
-
-    if (
-      !isCentered(face)
-    ) {
-
+  if (state.stage === 'ALIGN') {
+    if (!isCentered(face)) {
       return {
         ...state,
         message: 'Align Face',
@@ -60,9 +47,7 @@ export function runRegistrationMachine(
       };
     }
 
-    console.log(
-      'ALIGN SUCCESS',
-    );
+    console.log('ALIGN SUCCESS');
 
     return {
       stage: 'CENTER',
@@ -72,153 +57,104 @@ export function runRegistrationMachine(
     };
   }
 
-
   // CENTER
-  
-if (
-  state.stage === 'CENTER'
-) {
 
-  const elapsed =
-    now -
-    state.stageStartedAt;
+  if (state.stage === 'CENTER') {
+    const elapsed = now - state.stageStartedAt;
 
-  if (
-    elapsed >= 8000
-  ) {
+    if (elapsed >= 8000) {
+      // return {
+
+      //   stage: 'LEFT',
+
+      //   message:
+      //     'Look Left',
+
+      //   circleColor:
+      //     'yellow',
+
+      //   stageStartedAt:
+      //     now,
+      // };
+      return {
+        stage: 'SUCCESS',
+
+        message: 'Registration Success',
+
+        circleColor: '#22c55e',
+
+        stageStartedAt: now,
+      };
+    }
 
     return {
+      ...state,
 
-      stage: 'LEFT',
-
-      message:
-        'Look Left',
-
-      circleColor:
-        'yellow',
-
-      stageStartedAt:
-        now,
+      message: `Hold Center ${Math.ceil((8000 - elapsed) / 1000)}`,
     };
   }
-
-  return {
-
-    ...state,
-
-    message:
-      `Hold Center ${Math.ceil(
-        (8000 - elapsed) / 1000,
-      )}`,
-  };
-}
-
 
   // LEFT
-if (
-  state.stage === 'LEFT'
-) {
+  if (state.stage === 'LEFT') {
+    if (!isFacingLeft(face)) {
+      return {
+        ...state,
 
-  if (
-    !isFacingLeft(face)
-  ) {
+        message: 'Turn Left',
+      };
+    }
+
+    const elapsed = now - state.stageStartedAt;
+
+    if (elapsed >= 5000) {
+      return {
+        stage: 'RIGHT',
+
+        message: 'Look Right',
+
+        circleColor: 'yellow',
+
+        stageStartedAt: now,
+      };
+    }
 
     return {
-
       ...state,
 
-      message:
-        'Turn Left',
+      message: `Hold Left ${Math.ceil((5000 - elapsed) / 1000)}`,
     };
   }
-
-  const elapsed =
-    now -
-    state.stageStartedAt;
-
-  if (
-    elapsed >= 5000
-  ) {
-
-    return {
-
-      stage: 'RIGHT',
-
-      message:
-        'Look Right',
-
-      circleColor:
-        'yellow',
-
-      stageStartedAt:
-        now,
-    };
-  }
-
-  return {
-
-    ...state,
-
-    message:
-      `Hold Left ${Math.ceil(
-        (5000 - elapsed) / 1000,
-      )}`,
-  };
-}
 
   // RIGHT
-if (
-  state.stage === 'RIGHT'
-) {
+  if (state.stage === 'RIGHT') {
+    if (!isFacingRight(face)) {
+      return {
+        ...state,
 
-  if (
-    !isFacingRight(face)
-  ) {
+        message: 'Turn Right',
+      };
+    }
+
+    const elapsed = now - state.stageStartedAt;
+
+    if (elapsed >= 5000) {
+      return {
+        stage: 'SUCCESS',
+
+        message: 'Registration Success',
+
+        circleColor: '#22c55e',
+
+        stageStartedAt: now,
+      };
+    }
 
     return {
-
       ...state,
 
-      message:
-        'Turn Right',
+      message: `Hold Right ${Math.ceil((5000 - elapsed) / 1000)}`,
     };
   }
-
-  const elapsed =
-    now -
-    state.stageStartedAt;
-
-  if (
-    elapsed >= 5000
-  ) {
-
-    return {
-
-      stage: 'SUCCESS',
-
-      message:
-        'Registration Success',
-
-      circleColor:
-        '#22c55e',
-
-      stageStartedAt:
-        now,
-    };
-  }
-
-  return {
-
-    ...state,
-
-    message:
-      `Hold Right ${Math.ceil(
-        (5000 - elapsed) / 1000,
-      )}`,
-  };
-}
-
 
   return state;
 }
-

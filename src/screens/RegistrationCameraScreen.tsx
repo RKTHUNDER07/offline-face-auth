@@ -1,15 +1,14 @@
 import React, {useEffect, useRef, useState} from 'react';
 
-import {View, Text, StyleSheet} from 'react-native';
-
+import {View, Text, StyleSheet, Dimensions, Image} from 'react-native';
+import {FACE_CROP_CONFIG} from '../core/embeddings/faceCropConfig';
 import {runRegistrationMachine} from '../core/registration/registrationMachine';
 
 import {normalizeDetection} from '../core/detection/normalizeDetection';
 
 import {Camera, useCameraDevice} from 'react-native-vision-camera';
-
-import {generateEmbedding} from '../core/embeddings/generateEmbedding';
-
+import {normalizeEmbedding} from '../core/embeddings/normalizeEmbedding';
+import {generateEmbedding} from '../core/embeddings/generateFixedEmbedding';
 import FaceDetection from '@react-native-ml-kit/face-detection';
 
 import {createEmptyEmbeddings} from '../core/registration/registrationEmbeddings';
@@ -21,16 +20,16 @@ export default function RegistrationCameraScreen() {
   const cameraRef = useRef<Camera>(null);
 
   const device = useCameraDevice('front');
-
+  const [croppedFaceUri, setCroppedFaceUri] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState(false);
-
+  const embeddingInProgressRef = useRef(false);
   const [registrationState, setRegistrationState] = useState({
     stage: 'ALIGN',
     message: 'Align Face',
     circleColor: 'red',
     stageStartedAt: Date.now(),
   });
-
+  const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
   const [embeddings, setEmbeddings] = useState<any[]>([]);
   const registrationCompletedRef = useRef(false);
   const previousStageRef = useRef(registrationState.stage);
@@ -38,6 +37,11 @@ export default function RegistrationCameraScreen() {
   const [registrationEmbeddings, setRegistrationEmbeddings] = useState(
     createEmptyEmbeddings(),
   );
+  const {
+    OVERLAY_SIZE,
+
+    OVERLAY_TOP,
+  } = FACE_CROP_CONFIG;
   //-------------------------------------------------------------------
 
   // useEffect(() => {
@@ -67,14 +71,37 @@ export default function RegistrationCameraScreen() {
 
     interval = setInterval(async () => {
       try {
+        /*
+        REGISTRATION FINISHED
+      */
+
         if (registrationCompletedRef.current) {
           clearInterval(interval);
+
           return;
         }
+
+        /*
+        ALREADY SUCCESS
+      */
+
         if (registrationState.stage === 'SUCCESS') {
           return;
         }
-        const photo = await cameraRef.current?.takePhoto({
+
+        /*
+        CAMERA NOT READY
+      */
+
+        if (!cameraRef.current) {
+          return;
+        }
+
+        /*
+        CAPTURE PHOTO
+      */
+
+        const photo = await cameraRef.current.takePhoto({
           qualityPrioritization: 'speed',
 
           flash: 'off',
@@ -86,23 +113,37 @@ export default function RegistrationCameraScreen() {
           return;
         }
 
+        /*
+        FACE DETECTION
+      */
+
         const faces = await FaceDetection.detect(`file://${photo.path}`);
 
-        // NO FACE
+        /*
+        NO FACE
+      */
+
         if (faces.length === 0) {
           setRegistrationState(prev => ({
             ...prev,
+
             message: 'No Face Detected',
+
             circleColor: 'red',
           }));
+
           return;
         }
 
-        // FACE FOUND
+        /*
+        NORMALIZE DETECTION
+      */
 
         const normalizedFace = normalizeDetection(faces[0]);
 
-        //------------------------------------------------------------------------
+        /*
+        EMBEDDING CAPTURE RULES
+      */
 
         const now = Date.now();
 
@@ -110,36 +151,102 @@ export default function RegistrationCameraScreen() {
 
         const validForEmbedding = isCloseEnough(normalizedFace);
 
-        if (canCaptureEmbedding && validForEmbedding) {
+        /*
+        GENERATE EMBEDDING
+      */
+
+        if (
+          canCaptureEmbedding &&
+          validForEmbedding &&
+          !embeddingInProgressRef.current
+        ) {
+          /*
+          LOCK INFERENCE
+        */
+
+          embeddingInProgressRef.current = true;
+
           lastEmbeddingCaptureRef.current = now;
 
-          generateEmbedding(photo.path).then(embedding => {
-            setRegistrationEmbeddings(prev => {
-              const updated = {
-                embeddings: [...prev.embeddings, embedding],
-              };
+          generateEmbedding({
+            imagePath: `file://${photo.path}`,
 
-              console.log('TOTAL EMBEDDINGS:', updated.embeddings.length);
+            photoWidth: photo.width,
 
-              return updated;
+            photoHeight: photo.height,
+
+            screenWidth,
+
+            screenHeight,
+          })
+            .then(result => {
+              /*
+              INVALID RESULT
+            */
+
+              if (!result?.embedding) {
+                return;
+              }
+              setCroppedFaceUri(result.previewImage); /*
+              REGISTRATION COMPLETE
+            */
+
+              if (registrationCompletedRef.current) {
+                return;
+              }
+
+              /*
+              STORE EMBEDDING
+            */
+
+              setRegistrationEmbeddings(prev => {
+                /*
+                  HARD LIMIT
+                */
+
+                if (prev.embeddings.length >= 15) {
+                  return prev;
+                }
+
+                const normalized = normalizeEmbedding(result.embedding);
+
+                const updated = {
+                  embeddings: [...prev.embeddings, normalized],
+                };
+
+                console.log('TOTAL EMBEDDINGS:', updated.embeddings.length);
+
+                return updated;
+              });
+            })
+            .catch(error => {
+              console.log('EMBEDDING GENERATION ERROR:', error);
+            })
+            .finally(() => {
+              /*
+              RELEASE LOCK
+            */
+
+              embeddingInProgressRef.current = false;
             });
-          });
         }
 
-        //----------------------------------------------------------------------
+        /*
+        UPDATE REGISTRATION STATE
+      */
+
         setRegistrationState(prevState =>
           runRegistrationMachine(prevState, normalizedFace),
         );
       } catch (error) {
-        console.log('Detection Error:', error);
+        console.log('DETECTION ERROR:', error);
       }
-    }, 700);
+    }, 1400);
 
     return () => {
       clearInterval(interval);
     };
   }, []);
-
   useEffect(() => {
     if (registrationState.stage === 'SUCCESS') {
       registrationCompletedRef.current = true;
@@ -178,15 +285,42 @@ export default function RegistrationCameraScreen() {
       <View
         style={{
           position: 'absolute',
-          width: 260,
-          height: 260,
-          borderRadius: 130,
+          width: OVERLAY_SIZE,
+
+          height: OVERLAY_SIZE,
+
+          borderRadius: OVERLAY_SIZE / 2,
+
+          top: OVERLAY_TOP,
           borderWidth: 5,
           borderColor: registrationState.circleColor,
           alignSelf: 'center',
-          top: 220,
         }}
       />
+      {croppedFaceUri && (
+        <Image
+          source={{uri: croppedFaceUri}}
+          style={{
+            position: 'absolute',
+
+            top: 80,
+
+            right: 20,
+
+            width: 140,
+
+            height: 140,
+
+            borderWidth: 3,
+
+            borderColor: 'white',
+
+            borderRadius: 12,
+
+            backgroundColor: 'black',
+          }}
+        />
+      )}
 
       <Text style={styles.message}>{registrationState.message}</Text>
     </View>

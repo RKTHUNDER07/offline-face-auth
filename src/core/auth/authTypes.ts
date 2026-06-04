@@ -1,19 +1,14 @@
-import { ChallengeType } from '../liveness/challengeTypes';
-
+import {ChallengeType} from '../liveness/challengeTypes';
 export type AuthPhase =
   | 'ALIGN'
   | 'SELECT_CHALLENGE'
   | 'RUN_CHALLENGE'
-  | 'SUCCESS'
-  | 'FAILED';
-
+  | 'AUTHENTICATING'
+  | 'AUTH_SUCCESS'
+  | 'AUTH_FAILED';
 export interface AuthState {
-
   phase: AuthPhase;
-
-  currentChallenge?: ChallengeType;
-
+  currentChallenge?: ChallengeType | null;
   isAuthenticated: boolean;
-
   message: string;
 }
