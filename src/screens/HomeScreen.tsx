@@ -5,8 +5,9 @@ import {getRegistration} from '../core/storage/getRegistration';
 export default function HomeScreen({navigation}: any) {
   useEffect(() => {
     const checkRegistration = async () => {
-      const data = await getRegistration('demo-user');
-      console.log('HOME REGISTRATION:', data);
+      const registration = await getRegistration('demo-user');
+      console.log('HOME REGISTRATION FOUND:', !!registration);
+      console.log('EMBEDDING COUNT:', registration?.embeddings?.length);
     };
     checkRegistration();
   }, []);

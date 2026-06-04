@@ -1,5 +1,6 @@
 import {saveAttendance} from '../storage/saveAttendance';
 import {getCurrentLocation} from '../location/getCurrentLocation';
+import {syncAttendance} from '../storage/syncAttendance';
 export async function markAttendance({
   userId,
   similarity,
@@ -16,6 +17,7 @@ export async function markAttendance({
       longitude: location.longitude,
     });
     console.log('ATTENDANCE MARKED');
+    await syncAttendance();
   } catch (error) {
     /* FALLBACK WITHOUT GPS */ console.log(
       'LOCATION FAILED, SAVING WITHOUT GPS',

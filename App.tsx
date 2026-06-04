@@ -3,7 +3,7 @@ import React, {useEffect} from 'react';
 import {loadEmbeddingModel} from './src/core/embeddings/loadModel';
 import {initDatabase} from './src/core/storage/initDatabase';
 import {NavigationContainer} from '@react-navigation/native';
-
+import {syncAttendance} from './src/core/storage/syncAttendance';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from './src/screens/HomeScreen';
 import EmbeddingTestScreen from './src/screens/EmbeddingTestScreen';
@@ -15,20 +15,42 @@ const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
   useEffect(() => {
-    initDatabase();
-  }, []);
-  useEffect(() => {
-    const initializeModel = async () => {
+    const initializeApp = async () => {
       try {
+        console.log(
+          '---------------------------------------------------------------------------------------------------',
+        );
+        /*
+        INIT DATABASE
+      */
+
+        await initDatabase();
+
+        /*
+        LOAD MODEL
+      */
+
         console.log('LOADING MODEL...');
+
         await loadEmbeddingModel();
+
         console.log('MODEL LOADED');
+
+        /*
+        SYNC ATTENDANCE
+      */
+
+        await syncAttendance();
+
+        console.log('ATTENDANCE SYNC COMPLETE');
       } catch (error) {
-        console.log('MODEL LOAD ERROR:', error);
+        console.log('APP INIT ERROR::', error);
       }
     };
-    initializeModel();
+
+    initializeApp();
   }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator
