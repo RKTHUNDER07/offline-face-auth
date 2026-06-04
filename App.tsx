@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-
+import Benchmark from './src/utils/benchmark';
 import {loadEmbeddingModel} from './src/core/embeddings/loadModel';
 import {initDatabase} from './src/core/storage/initDatabase';
 import {NavigationContainer} from '@react-navigation/native';
@@ -10,6 +10,7 @@ import EmbeddingTestScreen from './src/screens/EmbeddingTestScreen';
 import AttendanceCameraScreen from './src/screens/AttendanceCameraScreen';
 import AttendanceScreen from './src/screens/AttendanceScreen';
 import RegistrationScreen from './src/screens/RegistrationScreen';
+import BenchmarkScreen from './src/screens/BenchmarkScreen';
 import RegistrationCameraScreen from './src/screens/RegistrationCameraScreen';
 const Stack = createNativeStackNavigator();
 
@@ -49,6 +50,13 @@ function App(): JSX.Element {
     };
 
     initializeApp();
+    Benchmark.start('test');
+
+    setTimeout(() => {
+      Benchmark.end('test');
+
+      console.log(Benchmark.getLogs());
+    }, 1000);
   }, []);
 
   return (
@@ -61,6 +69,7 @@ function App(): JSX.Element {
 
         <Stack.Screen name="Registration" component={RegistrationScreen} />
         <Stack.Screen name="Attendance" component={AttendanceScreen} />
+        <Stack.Screen name="BenchmarkScreen" component={BenchmarkScreen} />
 
         <Stack.Screen
           name="AttendanceCamera"

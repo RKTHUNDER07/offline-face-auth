@@ -1,7 +1,7 @@
 import {getEmbeddingModel} from './loadModel';
 
 import {preprocessFace} from './preprocessFace';
-
+import Benchmark from '../../utils/benchmark';
 import {cropFace} from './cropFace';
 
 export async function generateEmbedding(imagePath: string, face: any) {
@@ -46,9 +46,11 @@ export async function generateEmbedding(imagePath: string, face: any) {
     */
 
     console.log('RUNNING MODEL...');
-
+    Benchmark.start('embedding-inference');
     const output = await model.run([inputTensor]);
+    const result = Benchmark.end('embedding-inference');
 
+    console.log(result);
     console.log('EMBEDDING GENERATED');
 
     return output?.[0];

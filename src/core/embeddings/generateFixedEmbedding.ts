@@ -1,4 +1,5 @@
 import {getEmbeddingModel} from './loadModel';
+import Benchmark from '../../utils/benchmark';
 
 import {preprocessFace} from './preprocessFace';
 
@@ -111,9 +112,9 @@ export async function generateEmbedding({
       STEP 1
       Crop face
     */
-
+    Benchmark.start('face-crop');
     const croppedFacePath = await cropFace(imagePath, cropRegion);
-
+    Benchmark.end('face-crop');
     if (!croppedFacePath) {
       console.log('FACE CROP FAILED');
 
@@ -124,9 +125,10 @@ export async function generateEmbedding({
       STEP 2
       Preprocess
     */
+    Benchmark.start('face-preprocess');
 
     const inputTensor = await preprocessFace(croppedFacePath);
-
+    Benchmark.end('face-preprocess');
     if (!inputTensor) {
       console.log('PREPROCESS FAILED');
 
@@ -140,8 +142,11 @@ export async function generateEmbedding({
 
     console.log('RUNNING MODEL...');
 
+    Benchmark.start('embedding-inference');
     const output = await model.run([inputTensor]);
+    const result = Benchmark.end('embedding-inference');
 
+    console.log(result);
     console.log('EMBEDDING GENERATED');
 
     console.log('========================');

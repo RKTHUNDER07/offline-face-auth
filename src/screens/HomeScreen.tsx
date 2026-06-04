@@ -31,6 +31,11 @@ export default function HomeScreen({navigation}: any) {
         onPress={() => navigation.navigate('Attendance')}>
         <Text style={styles.buttonText}>Attendance</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('BenchmarkScreen')}>
+        <Text style={styles.buttonText}>BenchmarkScreen</Text>
+      </TouchableOpacity>
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import React, {useRef, useEffect, useState} from 'react';
 import {markAttendance} from '../core/attendance/markAttendance';
 import {View, Text, StyleSheet, Dimensions} from 'react-native';
+import Benchmark from '../utils/benchmark';
 
 import {Camera, useCameraDevice} from 'react-native-vision-camera';
 
@@ -51,6 +52,8 @@ export default function AttendanceCameraScreen({navigation}: any) {
 
   useEffect(() => {
     if (authState.phase === 'AUTH_SUCCESS') {
+      Benchmark.end('full-auth');
+
       const timeout = setTimeout(() => {
         navigation.goBack();
       }, 1500);
@@ -125,8 +128,11 @@ export default function AttendanceCameraScreen({navigation}: any) {
           RUN AUTH
         */
 
+      Benchmark.start('embedding-auth');
+
       const authResult = await runEmbeddingAuth(embeddingResult.embedding);
 
+      Benchmark.end('embedding-auth');
       console.log('AUTH SCORE:', authResult.score);
 
       /*
@@ -136,10 +142,14 @@ export default function AttendanceCameraScreen({navigation}: any) {
       if (authResult.success) {
         authPhotoRef.current = null;
         /* MARK ATTENDANCE */
+        Benchmark.start('attendance-save');
+
         await markAttendance({
           userId: 'demo-user',
           similarity: authResult.score,
         });
+
+        Benchmark.end('attendance-save');
         setAuthState({
           ...nextState,
 
@@ -229,7 +239,7 @@ export default function AttendanceCameraScreen({navigation}: any) {
         /*
             CAPTURE PHOTO
           */
-
+        Benchmark.start('camera-capture');
         const photo = await cameraRef.current.takePhoto({
           qualityPrioritization: 'speed',
 
@@ -237,17 +247,16 @@ export default function AttendanceCameraScreen({navigation}: any) {
 
           enableShutterSound: false,
         });
-
+        Benchmark.end('camera-capture');
         if (!photo?.path) {
           return;
         }
 
         /*
             FACE DETECTION
-          */
-
+          */ Benchmark.start('mlkit-detection');
         const faces = await FaceDetection.detect(`file://${photo.path}`);
-
+        Benchmark.end('mlkit-detection');
         /*
             NO FACE
           */
@@ -268,8 +277,11 @@ export default function AttendanceCameraScreen({navigation}: any) {
             NORMALIZE FACE
           */
 
+        Benchmark.start('face-normalize');
+
         const normalizedFace = normalizeDetection(faces[0]);
 
+        Benchmark.end('face-normalize');
         const detectionResult = {
           hasFace: true,
 
@@ -343,6 +355,12 @@ export default function AttendanceCameraScreen({navigation}: any) {
           const nextState = runAuthMachine(prevState, detectionResult);
 
           console.log('PHASE:', nextState.phase);
+          if (
+            prevState.phase !== 'AUTHENTICATING' &&
+            nextState.phase === 'AUTHENTICATING'
+          ) {
+            Benchmark.start('full-auth');
+          }
 
           /*
                 START EMBEDDING AUTH
