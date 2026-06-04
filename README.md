@@ -141,48 +141,299 @@ After successful validation:
 
 ---
 
-# Embedding Architecture
+# Updated Embedding Architecture
 
 ## Current State
 
-Current embeddings are MOCK embeddings.
+EdgeAuth now uses REAL biometric embeddings generated fully offline on-device.
 
-Example:
-
-```ts
-Array.from({ length: 128 }, () => Math.random())
-```
-
-This validates:
-
-* pipeline architecture
-* storage flow
-* retrieval flow
-* registration lifecycle
-
----
-
-## Planned Real Embedding Pipeline
+Current pipeline:
 
 ```text
 Camera Capture
         ↓
-Face Detection
+Fixed Overlay Face Crop
         ↓
-Face Crop
+Image Resize (112x112)
         ↓
-Image Normalization
+RGB Extraction
         ↓
-TFLite FaceNet / MobileFaceNet
+Normalization [-1,1]
         ↓
-Real Embedding Vector
+Tensor Conversion
         ↓
-Embedding Averaging
+MobileFaceNet TFLite Inference
+        ↓
+128-Dimensional Face Embedding
         ↓
 SQLite Storage
 ```
 
 ---
+
+# Current Embedding Pipeline
+
+## File Structure
+
+```text
+core/embeddings/
+├── generateFixedEmbedding.ts
+├── cropFace.ts
+├── preprocessFace.ts
+├── loadModel.ts
+└── normalizeEmbedding.ts
+```
+
+---
+
+# Current Pipeline Stages
+
+## 1. Fixed Overlay Crop
+
+The system now uses a deterministic UI-aligned crop region.
+
+Instead of using ML Kit bounding boxes for embedding extraction:
+
+* the face is aligned inside a guide circle
+* crop coordinates are generated from fixed UI geometry
+* crop remains visually stable across captures
+
+Benefits:
+
+* consistent framing
+* reduced embedding drift
+* reduced background noise
+* stable biometric alignment
+
+---
+
+## 2. Real Face Crop
+
+Current implementation performs:
+
+```text
+image crop
+→ face-region extraction
+→ resize to 112x112
+```
+
+Unlike earlier versions, the system no longer resizes the full camera frame.
+
+This significantly improves:
+
+* embedding consistency
+* facial focus
+* cosine similarity stability
+
+---
+
+## 3. Preprocessing Pipeline
+
+Current preprocessing:
+
+```text
+cropped face
+→ resize 112x112
+→ base64 read
+→ jpeg decode
+→ RGB extraction
+→ Float32 tensor conversion
+→ normalization [-1,1]
+```
+
+Tensor shape:
+
+```text
+112 x 112 x 3
+```
+
+---
+
+## 4. MobileFaceNet Integration
+
+Current system uses:
+
+```text
+MobileFaceNet (.tflite)
+```
+
+running fully on-device using:
+
+```text
+react-native-fast-tflite
+```
+
+Current output:
+
+```text
+128-dimensional embedding vector
+```
+
+Example:
+
+```ts
+[
+  -0.0265,
+   0.0191,
+   0.0039,
+   ...
+]
+```
+
+---
+
+# Current Registration Architecture
+
+Current registration flow:
+
+```text
+Camera Capture
+        ↓
+ML Kit Face Detection
+        ↓
+Liveness Validation
+        ↓
+Fixed Overlay Crop
+        ↓
+Embedding Generation
+        ↓
+Continuous Embedding Collection
+        ↓
+SQLite Persistence
+        ↓
+Registration Success
+```
+
+---
+
+# Multi-Embedding Enrollment
+
+The system now continuously captures multiple embeddings during registration.
+
+Purpose:
+
+* improve robustness
+* capture tiny pose variations
+* improve future authentication accuracy
+* reduce false rejection risk
+
+Embeddings are collected while:
+
+* face remains aligned
+* liveness validation passes
+* registration state machine remains active
+
+---
+
+# Current Registration Improvements
+
+## Implemented
+
+### Inference Locking
+
+Prevents overlapping TensorFlow inference calls.
+
+Benefits:
+
+* lower CPU spikes
+* reduced race conditions
+* stable embedding generation
+
+---
+
+### Continuous Registration Loop
+
+Registration now behaves like a real biometric onboarding system.
+
+Features:
+
+* automatic capture
+* continuous validation
+* hands-free enrollment
+* stable UX
+
+---
+
+### Fixed Coordinate Mapping
+
+The system now correctly maps:
+
+```text
+camera preview coordinates
+→ captured image coordinates
+```
+
+using:
+
+* scaleX
+* scaleY
+
+This solved earlier crop alignment issues.
+
+---
+
+# Current Technical Status
+
+## Fully Working
+
+* VisionCamera
+* ML Kit face detection
+* Real image crop
+* TFLite inference
+* MobileFaceNet embeddings
+* Embedding storage
+* Registration persistence
+* Multi-embedding collection
+
+---
+
+# Remaining Engineering Tasks
+
+## 1. Embedding Normalization
+
+L2 normalization before storage and comparison.
+
+---
+
+## 2. Embedding Aggregation
+
+Average multiple embeddings into a stable enrollment representation.
+
+---
+
+## 3. Cosine Similarity Authentication
+
+Similarity formula:
+
+similarity(A,B)=A·B / (|A||B|)
+
+---
+
+## 4. Attendance Authentication Pipeline
+
+```text
+Live Capture
+        ↓
+Generate Live Embedding
+        ↓
+Fetch Stored Embeddings
+        ↓
+Cosine Similarity Match
+        ↓
+Attendance Decision
+```
+
+---
+
+# Current Project Phase
+
+```text
+Biometric Pipeline Refinement Phase
+```
+
+The project is no longer a prototype.
+
+Core biometric infrastructure is now operational.
 
 # SQLite Persistence Flow
 
