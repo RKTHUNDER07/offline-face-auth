@@ -1,156 +1,156 @@
+import {DetectionResult} from '../detection/detectionTypes';
 
-import { DetectionResult } from '../detection/detectionTypes';
+import {AuthState} from './authTypes';
 
-import { AuthState } from './authTypes';
+import {getRandomChallenge} from '../liveness/challengeEngine';
 
-import { getRandomChallenge } from '../liveness/challengeEngine';
-
-import {
-  isFacingLeft,
-  isFacingRight,
-  isCentered,
-} from '../liveness/validators';
-
+import {isFacingLeft, isFacingRight, isCentered} from '../liveness/validators';
 
 export function runAuthMachine(
   currentState: AuthState,
   detection: DetectionResult,
 ): AuthState {
-
   switch (currentState.phase) {
+    /*
+      ALIGNMENT STAGE
+    */
 
     case 'ALIGN':
-
       if (!detection.face) {
-
         return {
           ...currentState,
+
           message: 'No face detected',
         };
       }
 
-      if (
-        isCentered(detection.face)
-      ) {
-
+      if (isCentered(detection.face)) {
         return {
           ...currentState,
+
           phase: 'SELECT_CHALLENGE',
+
           message: 'Face aligned',
         };
       }
 
       return {
         ...currentState,
+
         message: 'Align your face',
       };
 
-
+    /*
+      SELECT CHALLENGE
+    */
 
     case 'SELECT_CHALLENGE':
+      /*
+        PREVENT RESELECTION
+      */
 
-      // Prevent challenge reselection
-      if (
-        currentState.currentChallenge
-      ) {
-
+      if (currentState.currentChallenge) {
         return {
           ...currentState,
+
           phase: 'RUN_CHALLENGE',
         };
       }
 
-      const challenge =
-        getRandomChallenge();
+      const challenge = getRandomChallenge();
 
       let instructionMessage = '';
 
       switch (challenge) {
-
         case 'LEFT_TURN':
-
-          instructionMessage =
-            'Turn your face left';
+          instructionMessage = 'Turn your face left';
 
           break;
 
-
         case 'RIGHT_TURN':
-
-          instructionMessage =
-            'Turn your face right';
+          instructionMessage = 'Turn your face right';
 
           break;
       }
 
       return {
         ...currentState,
+
         phase: 'RUN_CHALLENGE',
+
         currentChallenge: challenge,
+
         message: instructionMessage,
       };
 
-
+    /*
+      RUN CHALLENGE
+    */
 
     case 'RUN_CHALLENGE':
-
       if (!detection.face) {
-
         return {
           ...currentState,
+
           message: 'Face lost',
         };
       }
 
       let passed = false;
 
-      switch (
-        currentState.currentChallenge
-      ) {
-
+      switch (currentState.currentChallenge) {
         case 'LEFT_TURN':
-
-          passed = isFacingLeft(
-            detection.face,
-          );
+          passed = isFacingLeft(detection.face);
 
           break;
 
-
         case 'RIGHT_TURN':
-
-          passed = isFacingRight(
-            detection.face,
-          );
+          passed = isFacingRight(detection.face);
 
           break;
       }
 
-      if (passed) {
+      /*
+        LIVENESS PASSED
+      */
 
+      if (passed) {
         return {
           ...currentState,
-          phase: 'SUCCESS',
-          isAuthenticated: true,
+
+          phase: 'AUTHENTICATING',
+
           currentChallenge: null,
-          message:
-            'Authentication successful',
+
+          message: 'Authenticating...',
         };
       }
 
       return currentState;
 
+    /*
+      AUTHENTICATING
+      (Handled in screen)
+    */
 
-
-    case 'SUCCESS':
-
+    case 'AUTHENTICATING':
       return currentState;
 
+    /*
+      AUTH SUCCESS
+    */
 
+    case 'AUTH_SUCCESS':
+      return currentState;
+
+    /*
+      AUTH FAILED
+    */
+
+    case 'AUTH_FAILED':
+      return currentState;
 
     default:
-
       return currentState;
   }
 }
-

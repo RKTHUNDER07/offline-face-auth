@@ -5,7 +5,6 @@ import {initDatabase} from './src/core/storage/initDatabase';
 import {NavigationContainer} from '@react-navigation/native';
 
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-
 import HomeScreen from './src/screens/HomeScreen';
 import EmbeddingTestScreen from './src/screens/EmbeddingTestScreen';
 import AttendanceCameraScreen from './src/screens/AttendanceCameraScreen';
@@ -18,7 +17,18 @@ function App(): JSX.Element {
   useEffect(() => {
     initDatabase();
   }, []);
-
+  useEffect(() => {
+    const initializeModel = async () => {
+      try {
+        console.log('LOADING MODEL...');
+        await loadEmbeddingModel();
+        console.log('MODEL LOADED');
+      } catch (error) {
+        console.log('MODEL LOAD ERROR:', error);
+      }
+    };
+    initializeModel();
+  }, []);
   return (
     <NavigationContainer>
       <Stack.Navigator
