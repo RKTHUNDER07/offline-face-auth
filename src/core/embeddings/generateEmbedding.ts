@@ -1,7 +1,60 @@
-export async function generateEmbedding(imagePath: string) {
-  // MOCK EMBEDDING
+import {getEmbeddingModel} from './loadModel';
 
-  const embedding = Array.from({length: 128}, () => Math.random());
+import {preprocessFace} from './preprocessFace';
 
-  return embedding;
+import {cropFace} from './cropFace';
+
+export async function generateEmbedding(imagePath: string, face: any) {
+  try {
+    const model = getEmbeddingModel();
+
+    if (!model) {
+      console.log('MODEL NOT LOADED');
+
+      return null;
+    }
+
+    /*
+      STEP 1
+      Crop face
+    */
+
+    const croppedFacePath = await cropFace(imagePath, face);
+
+    if (!croppedFacePath) {
+      console.log('FACE CROP FAILED');
+
+      return null;
+    }
+
+    /*
+      STEP 2
+      Preprocess cropped face
+    */
+
+    const inputTensor = await preprocessFace(croppedFacePath);
+
+    if (!inputTensor) {
+      console.log('PREPROCESS FAILED');
+
+      return null;
+    }
+
+    /*
+      STEP 3
+      Run inference
+    */
+
+    console.log('RUNNING MODEL...');
+
+    const output = await model.run([inputTensor]);
+
+    console.log('EMBEDDING GENERATED');
+
+    return output?.[0];
+  } catch (error) {
+    console.log('EMBEDDING ERROR:', error);
+
+    return null;
+  }
 }

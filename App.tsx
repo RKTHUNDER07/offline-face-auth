@@ -7,12 +7,12 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import HomeScreen from './src/screens/HomeScreen';
-
+import EmbeddingTestScreen from './src/screens/EmbeddingTestScreen';
 import CameraScreen from './src/screens/CameraScreen';
 
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import RegistrationCameraScreen from './src/screens/RegistrationCameraScreen';
-
+import {generateEmbedding} from './src/core/embeddings/generateEmbedding';
 const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
@@ -22,7 +22,15 @@ function App(): JSX.Element {
   useEffect(() => {
     loadEmbeddingModel();
   }, []);
+  useEffect(() => {
+    async function init() {
+      await loadEmbeddingModel();
 
+      await generateEmbedding();
+    }
+
+    init();
+  }, []);
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -34,7 +42,7 @@ function App(): JSX.Element {
         <Stack.Screen name="Registration" component={RegistrationScreen} />
 
         <Stack.Screen name="Camera" component={CameraScreen} />
-
+        <Stack.Screen name="EmbeddingTest" component={EmbeddingTestScreen} />
         <Stack.Screen
           name="RegistrationCamera"
           component={RegistrationCameraScreen}

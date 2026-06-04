@@ -25,6 +25,12 @@ export default function HomeScreen({navigation}: any) {
         onPress={() => navigation.navigate('Camera')}>
         <Text style={styles.buttonText}>Attendance</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('EmbeddingTest')}>
+        <Text style={styles.buttonText}>Test Embeddings</Text>
+      </TouchableOpacity>
     </View>
   );
 }

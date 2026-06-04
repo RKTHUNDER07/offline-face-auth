@@ -1,0 +1,9 @@
+export const FACE_CROP_CONFIG = {
+  OVERLAY_SIZE: 260,
+
+  OVERLAY_TOP: 220,
+
+  FACE_CROP_RATIO: 0.82,
+
+  FACE_Y_OFFSET: 0,
+};
