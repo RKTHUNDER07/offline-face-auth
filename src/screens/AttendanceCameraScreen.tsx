@@ -1,5 +1,5 @@
 import React, {useRef, useEffect, useState} from 'react';
-
+import {markAttendance} from '../core/attendance/markAttendance';
 import {View, Text, StyleSheet, Dimensions} from 'react-native';
 
 import {Camera, useCameraDevice} from 'react-native-vision-camera';
@@ -135,7 +135,11 @@ export default function AttendanceCameraScreen({navigation}: any) {
 
       if (authResult.success) {
         authPhotoRef.current = null;
-
+        /* MARK ATTENDANCE */
+        await markAttendance({
+          userId: 'demo-user',
+          similarity: authResult.score,
+        });
         setAuthState({
           ...nextState,
 

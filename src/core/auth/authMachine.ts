@@ -49,13 +49,13 @@ export function runAuthMachine(
         PREVENT RESELECTION
       */
 
-      if (currentState.currentChallenge) {
-        return {
-          ...currentState,
+      // if (currentState.currentChallenge) {
+      //   return {
+      //     ...currentState,
 
-          phase: 'RUN_CHALLENGE',
-        };
-      }
+      //     phase: 'RUN_CHALLENGE',
+      //   };
+      // }
 
       const challenge = getRandomChallenge();
 
@@ -97,7 +97,7 @@ export function runAuthMachine(
       }
 
       let passed = false;
-
+      console.log('CURRENT CHALLENGE:', currentState.currentChallenge);
       switch (currentState.currentChallenge) {
         case 'LEFT_TURN':
           passed = isFacingLeft(detection.face);
