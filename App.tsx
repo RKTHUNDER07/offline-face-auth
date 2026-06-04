@@ -8,29 +8,17 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import HomeScreen from './src/screens/HomeScreen';
 import EmbeddingTestScreen from './src/screens/EmbeddingTestScreen';
-import CameraScreen from './src/screens/CameraScreen';
-
+import AttendanceCameraScreen from './src/screens/AttendanceCameraScreen';
+import AttendanceScreen from './src/screens/AttendanceScreen';
 import RegistrationScreen from './src/screens/RegistrationScreen';
 import RegistrationCameraScreen from './src/screens/RegistrationCameraScreen';
-import {generateEmbedding} from './src/core/embeddings/generateEmbedding';
 const Stack = createNativeStackNavigator();
 
 function App(): JSX.Element {
   useEffect(() => {
     initDatabase();
   }, []);
-  useEffect(() => {
-    loadEmbeddingModel();
-  }, []);
-  useEffect(() => {
-    async function init() {
-      await loadEmbeddingModel();
 
-      await generateEmbedding();
-    }
-
-    init();
-  }, []);
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -40,8 +28,12 @@ function App(): JSX.Element {
         <Stack.Screen name="Home" component={HomeScreen} />
 
         <Stack.Screen name="Registration" component={RegistrationScreen} />
+        <Stack.Screen name="Attendance" component={AttendanceScreen} />
 
-        <Stack.Screen name="Camera" component={CameraScreen} />
+        <Stack.Screen
+          name="AttendanceCamera"
+          component={AttendanceCameraScreen}
+        />
         <Stack.Screen name="EmbeddingTest" component={EmbeddingTestScreen} />
         <Stack.Screen
           name="RegistrationCamera"

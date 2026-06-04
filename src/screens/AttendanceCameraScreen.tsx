@@ -9,8 +9,10 @@ import FaceDetection from '@react-native-ml-kit/face-detection';
 import {runAuthMachine} from '../core/auth/authMachine';
 
 import {normalizeDetection} from '../core/detection/normalizeDetection';
+import {generateEmbedding} from '../core/embeddings/generateFixedEmbedding';
 
-export default function CameraScreen() {
+import {runEmbeddingAuth} from '../core/auth/runEmbeddingAuth';
+export default function AttendanceCameraScreen({navigation}: any) {
   const device = useCameraDevice('front');
 
   const cameraRef = useRef<Camera>(null);
@@ -39,7 +41,11 @@ export default function CameraScreen() {
 
     return 'white';
   };
-
+  useEffect(() => {
+    if (authState.phase === 'SUCCESS') {
+      navigation.goBack();
+    }
+  }, [authState.phase]);
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
