@@ -1,73 +1,140 @@
-# EdgeAuth — Offline Biometric Attendance System
+# EdgeAuth — Offline First Biometric Attendance System
 
 ## Overview
 
-EdgeAuth is an offline-first biometric authentication system built with React Native.
+EdgeAuth is a lightweight offline-first biometric attendance system built using React Native, TensorFlow Lite, ML Kit Face Detection, and SQLite.
 
-The project focuses on:
+The project focuses on performing complete on-device facial authentication without requiring continuous internet connectivity.
 
-* Offline face registration
-* Liveness validation
+The system was designed specifically for:
+
+* low-connectivity environments
+* field attendance systems
+* lightweight mobile deployment
+* privacy-focused biometric authentication
+* mid-range Android devices
+
+The complete biometric pipeline runs fully on-device using TensorFlow Lite inference and local SQLite persistence.
+
+---
+
+# Core Features
+
+## Implemented
+
+### Biometric Registration System
+
+* Multi-stage face registration
 * Multi-angle embedding collection
-* Local SQLite persistence
-* Future offline attendance authentication
+* Continuous embedding generation
+* Offline SQLite persistence
+* Re-registration support
 
-The system is designed for environments with unstable or unavailable internet connectivity.
+### Attendance Authentication System
+
+* Real-time attendance authentication
+* Embedding-bank matching
+* Similarity-based authentication
+* Adaptive embedding updates
+* Duplicate attendance prevention
+
+### Offline-First Architecture
+
+* Local attendance persistence
+* Queue-based deferred sync
+* Offline attendance support
+* Sync recovery system
+
+### AI Inference Pipeline
+
+* TensorFlow Lite inference
+* MobileFaceNet embeddings
+* Real image preprocessing
+* Face crop normalization
+* Embedding comparison pipeline
+
+### Storage & Lifecycle Management
+
+* SQLite persistence
+* Temp image cleanup
+* Attendance history
+* Sync state management
 
 ---
 
-# Current Features
-
-## Completed
-
-* React Native Android setup
-* VisionCamera integration
-* Real-time camera preview
-* Offline ML Kit face detection
-* Face alignment validation
-* Left / Right pose validation
-* Registration state machine
-* Multi-stage registration flow
-* Continuous embedding collection
-* SQLite local storage
-* Registration retrieval system
-* Re-registration detection
-* Offline persistence
-
----
-
-# Registration Flow
+# System Architecture
 
 ```text
-User Opens Registration
-        ↓
-Check Existing Registration
-        ↓
-Already Registered?
-   ↙             ↘
-YES               NO
-↓                  ↓
-Show              Start
-Re-Register       Registration
-Button            Flow
+User
+ ↓
+Vision Camera
+ ↓
+ML Kit Face Detection
+ ↓
+Face Alignment & Liveness Validation
+ ↓
+Face Crop & Preprocessing
+ ↓
+TensorFlow Lite Inference
+ ↓
+Face Embedding Generation
+ ↓
+Embedding-Bank Authentication
+ ↓
+SQLite Persistence
+ ↓
+Offline Queue
+ ↓
+Sync Trigger
+(App Startup / Attendance Success)
+ ↓
+Cloud Sync Layer
 ```
+
+---
+
+# Current Architecture Design
+
+The system follows a modular layered architecture where:
+
+* biometric processing
+* authentication
+* persistence
+* synchronization
+* UI workflows
+
+are isolated into separate service layers.
+
+This separation improves:
+
+* maintainability
+* future scalability
+* enterprise integration
+* offline reliability
+* modular deployment
 
 ---
 
 # Registration Pipeline
 
+The registration system performs complete offline biometric enrollment.
+
+Current flow:
+
 ```text
-Camera Preview
+User Opens Registration
         ↓
-Face Detection
+Face Alignment Validation
         ↓
-Face Normalization
+Center Hold Validation
         ↓
-Registration State Machine
+Left Pose Validation
         ↓
-Pose Validation
+Right Pose Validation
         ↓
-Embedding Collection
+Continuous Embedding Collection
+        ↓
+Embedding Bank Creation
         ↓
 SQLite Persistence
         ↓
@@ -76,366 +143,100 @@ Registration Success
 
 ---
 
-# Detailed Registration Flow
+# Detailed Registration Stages
 
-## 1. ALIGN
+## 1. Face Alignment
 
-User aligns face inside circular frame.
+User aligns face inside guide overlay.
 
 Validation:
 
-* Face detected
-* Face close enough
-* Face centered
-
----
-
-## 2. CENTER HOLD
-
-User holds center pose for a few seconds.
+* face detected
+* face centered
+* stable alignment
+* sufficient face size
 
 Purpose:
 
-* Stable frontal embeddings
-* Better face quality
-* Lighting stabilization
-
-Embeddings are continuously generated.
+* stable face geometry
+* deterministic crop region
+* improved embedding consistency
 
 ---
 
-## 3. LEFT HOLD
+## 2. Multi-Angle Registration
 
-User turns face left.
+The system captures embeddings during:
+
+* frontal pose
+* left pose
+* right pose
 
 Purpose:
 
-* Multi-angle biometric coverage
-* Improve future authentication robustness
-
-Embeddings continue generating.
+* improve authentication robustness
+* reduce pose dependency
+* improve real-world matching accuracy
 
 ---
 
-## 4. RIGHT HOLD
+## 3. Continuous Embedding Collection
 
-User turns face right.
+Instead of storing a single embedding:
+
+* multiple embeddings are collected continuously
+* tiny facial variations are captured
+* embedding diversity improves matching stability
 
 Purpose:
 
-* Capture additional facial geometry
-* Improve real-world attendance matching
-
-Embeddings continue generating.
-
----
-
-## 5. SUCCESS
-
-After successful validation:
-
-* Camera closes
-* Registration finalizes
-* Embeddings saved locally
-* Registration marked complete
+* improved cosine similarity robustness
+* reduced false rejection
+* adaptive face representation
 
 ---
 
-# Updated Embedding Architecture
+## 4. TensorFlow Lite Inference
 
-## Current State
-
-EdgeAuth now uses REAL biometric embeddings generated fully offline on-device.
-
-Current pipeline:
+Current AI pipeline:
 
 ```text
-Camera Capture
+Captured Image
         ↓
-Fixed Overlay Face Crop
+Face Crop
         ↓
-Image Resize (112x112)
+Resize (112x112)
         ↓
 RGB Extraction
         ↓
 Normalization [-1,1]
         ↓
-Tensor Conversion
+Float32 Tensor Conversion
         ↓
-MobileFaceNet TFLite Inference
+MobileFaceNet Inference
         ↓
-128-Dimensional Face Embedding
-        ↓
-SQLite Storage
+128-Dimensional Embedding
 ```
 
----
+Current model:
 
-# Current Embedding Pipeline
+* MobileFaceNet (.tflite)
 
-## File Structure
+Runtime:
 
-```text
-core/embeddings/
-├── generateFixedEmbedding.ts
-├── cropFace.ts
-├── preprocessFace.ts
-├── loadModel.ts
-└── normalizeEmbedding.ts
-```
+* react-native-fast-tflite
 
 ---
 
-# Current Pipeline Stages
+## 5. SQLite Registration Persistence
 
-## 1. Fixed Overlay Crop
+Registration stores:
 
-The system now uses a deterministic UI-aligned crop region.
+* uid
+* embedding bank
+* registration timestamp
 
-Instead of using ML Kit bounding boxes for embedding extraction:
-
-* the face is aligned inside a guide circle
-* crop coordinates are generated from fixed UI geometry
-* crop remains visually stable across captures
-
-Benefits:
-
-* consistent framing
-* reduced embedding drift
-* reduced background noise
-* stable biometric alignment
-
----
-
-## 2. Real Face Crop
-
-Current implementation performs:
-
-```text
-image crop
-→ face-region extraction
-→ resize to 112x112
-```
-
-Unlike earlier versions, the system no longer resizes the full camera frame.
-
-This significantly improves:
-
-* embedding consistency
-* facial focus
-* cosine similarity stability
-
----
-
-## 3. Preprocessing Pipeline
-
-Current preprocessing:
-
-```text
-cropped face
-→ resize 112x112
-→ base64 read
-→ jpeg decode
-→ RGB extraction
-→ Float32 tensor conversion
-→ normalization [-1,1]
-```
-
-Tensor shape:
-
-```text
-112 x 112 x 3
-```
-
----
-
-## 4. MobileFaceNet Integration
-
-Current system uses:
-
-```text
-MobileFaceNet (.tflite)
-```
-
-running fully on-device using:
-
-```text
-react-native-fast-tflite
-```
-
-Current output:
-
-```text
-128-dimensional embedding vector
-```
-
-Example:
-
-```ts
-[
-  -0.0265,
-   0.0191,
-   0.0039,
-   ...
-]
-```
-
----
-
-# Current Registration Architecture
-
-Current registration flow:
-
-```text
-Camera Capture
-        ↓
-ML Kit Face Detection
-        ↓
-Liveness Validation
-        ↓
-Fixed Overlay Crop
-        ↓
-Embedding Generation
-        ↓
-Continuous Embedding Collection
-        ↓
-SQLite Persistence
-        ↓
-Registration Success
-```
-
----
-
-# Multi-Embedding Enrollment
-
-The system now continuously captures multiple embeddings during registration.
-
-Purpose:
-
-* improve robustness
-* capture tiny pose variations
-* improve future authentication accuracy
-* reduce false rejection risk
-
-Embeddings are collected while:
-
-* face remains aligned
-* liveness validation passes
-* registration state machine remains active
-
----
-
-# Current Registration Improvements
-
-## Implemented
-
-### Inference Locking
-
-Prevents overlapping TensorFlow inference calls.
-
-Benefits:
-
-* lower CPU spikes
-* reduced race conditions
-* stable embedding generation
-
----
-
-### Continuous Registration Loop
-
-Registration now behaves like a real biometric onboarding system.
-
-Features:
-
-* automatic capture
-* continuous validation
-* hands-free enrollment
-* stable UX
-
----
-
-### Fixed Coordinate Mapping
-
-The system now correctly maps:
-
-```text
-camera preview coordinates
-→ captured image coordinates
-```
-
-using:
-
-* scaleX
-* scaleY
-
-This solved earlier crop alignment issues.
-
----
-
-# Current Technical Status
-
-## Fully Working
-
-* VisionCamera
-* ML Kit face detection
-* Real image crop
-* TFLite inference
-* MobileFaceNet embeddings
-* Embedding storage
-* Registration persistence
-* Multi-embedding collection
-
----
-
-# Remaining Engineering Tasks
-
-## 1. Embedding Normalization
-
-L2 normalization before storage and comparison.
-
----
-
-## 2. Embedding Aggregation
-
-Average multiple embeddings into a stable enrollment representation.
-
----
-
-## 3. Cosine Similarity Authentication
-
-Similarity formula:
-
-similarity(A,B)=A·B / (|A||B|)
-
----
-
-## 4. Attendance Authentication Pipeline
-
-```text
-Live Capture
-        ↓
-Generate Live Embedding
-        ↓
-Fetch Stored Embeddings
-        ↓
-Cosine Similarity Match
-        ↓
-Attendance Decision
-```
-
----
-
-# Current Project Phase
-
-```text
-Biometric Pipeline Refinement Phase
-```
-
-The project is no longer a prototype.
-
-Core biometric infrastructure is now operational.
-
-# SQLite Persistence Flow
+Persistence flow:
 
 ```text
 Registration Success
@@ -444,12 +245,214 @@ saveRegistration()
         ↓
 SQLite Insert
         ↓
-Persistent Local Storage
-        ↓
-getRegistration()
-        ↓
-Offline Retrieval
+Persistent Offline Storage
 ```
+
+---
+
+# Attendance Authentication Pipeline
+
+The attendance system performs real-time biometric authentication fully offline.
+
+Current flow:
+
+```text
+Attendance Camera
+        ↓
+Face Alignment Validation
+        ↓
+ML Kit Face Detection
+        ↓
+Liveness Validation
+        ↓
+Face Preprocessing
+        ↓
+TensorFlow Lite Inference
+        ↓
+Live Embedding Generation
+        ↓
+Embedding-Bank Authentication
+        ↓
+Attendance Storage
+        ↓
+Queue-Based Sync
+        ↓
+Temp Cleanup
+```
+
+---
+
+# Current Authentication Logic
+
+## Embedding-Bank Authentication
+
+The system authenticates against multiple stored embeddings instead of a single vector.
+
+Current flow:
+
+```text
+Live Embedding
+        ↓
+Compare Against Embedding Bank
+        ↓
+Best Similarity Score
+        ↓
+Threshold Validation
+        ↓
+Attendance Decision
+```
+
+Benefits:
+
+* improved robustness
+* lighting tolerance
+* pose variation handling
+* better long-term authentication stability
+
+---
+
+## Adaptive Embedding Updates
+
+If authentication similarity exceeds:
+
+```text
+0.90+
+```
+
+the live embedding is added back into the embedding bank.
+
+Purpose:
+
+* adaptive identity refinement
+* improved long-term recognition
+* real-world appearance adaptation
+
+Embedding bank size remains bounded using FIFO cleanup logic.
+
+---
+
+# Offline Queue Architecture
+
+Attendance is always stored locally first.
+
+Current flow:
+
+```text
+Attendance Success
+        ↓
+SQLite Attendance Logs
+        ↓
+Pending Sync Queue
+        ↓
+Sync Trigger
+(App Startup / Attendance Success)
+        ↓
+Internet Available?
+        ↓
+Cloud Sync
+        ↓
+Mark Synced = 1
+```
+
+Current sync layer:
+
+* mocked locally
+* AWS-ready architecture
+
+---
+
+# Temporary File Lifecycle
+
+The system automatically deletes temporary biometric images after processing.
+
+Current lifecycle:
+
+```text
+Camera Capture
+        ↓
+Register Temp File
+        ↓
+Inference Pipeline
+        ↓
+Attendance / Registration Complete
+        ↓
+Automatic Cleanup
+```
+
+Purpose:
+
+* reduce storage accumulation
+* privacy-focused design
+* lightweight deployment
+
+Only embeddings persist permanently.
+
+---
+
+# Benchmark Results
+
+| Operation                | Average Time |
+| ------------------------ | ------------ |
+| Embedding Authentication | ~13 ms       |
+| Embedding Generation     | ~146 ms      |
+| Face Detection           | ~536 ms      |
+| Camera Capture           | ~805 ms      |
+
+---
+
+# Current Bottlenecks
+
+## Camera Capture Latency
+
+Current attendance flow uses:
+
+* photo-based capture
+
+instead of:
+
+* real-time frame processors
+
+This increases camera overhead.
+
+---
+
+## ML Kit Detection Overhead
+
+Face detection contributes significant latency on lower-end devices.
+
+Future frame-based inference can reduce this overhead significantly.
+
+---
+
+# Current Technical Status
+
+## Fully Working
+
+### Registration
+
+* VisionCamera
+* ML Kit face detection
+* Multi-angle registration
+* Real TFLite embeddings
+* Embedding collection
+* SQLite persistence
+
+### Attendance
+
+* Real-time authentication
+* Embedding-bank matching
+* Offline attendance
+* Queue sync
+* Adaptive embeddings
+* Temp cleanup
+
+### Infrastructure
+
+* SQLite architecture
+* Deferred sync layer
+* Benchmark system
+* Attendance history
+* Sync state tracking
 
 ---
 
@@ -458,256 +461,242 @@ Offline Retrieval
 ```text
 src/
 │
+├── assets/
+│   └── models/
+│       └── mobilefacenet.tflite
+│
+├── screens/
+│   ├── HomeScreen.tsx
+│   ├── RegistrationScreen.tsx
+│   ├── RegistrationCameraScreen.tsx
+│   ├── AttendanceScreen.tsx
+│   ├── AttendanceCameraScreen.tsx
+│   └── BenchmarkScreen.tsx
+│
 ├── core/
 │   │
 │   ├── auth/
-│   │   └── liveness/
-│   │       └── validators.ts
+│   │   ├── authMachine.ts
+│   │   ├── authTypes.ts
+│   │   └── runEmbeddingAuth.ts
+│   │
+│   ├── embeddings/
+│   │   ├── cropFace.ts
+│   │   ├── preprocessFace.ts
+│   │   ├── generateEmbedding.ts
+│   │   ├── compareEmbeddings.ts
+│   │   ├── normalizeEmbedding.ts
+│   │   └── loadModel.ts
 │   │
 │   ├── detection/
 │   │   └── normalizeDetection.ts
 │   │
-│   ├── embeddings/
-│   │   └── generateEmbedding.ts
+│   ├── liveness/
+│   │   └── validators.ts
 │   │
 │   ├── registration/
 │   │   ├── registrationMachine.ts
 │   │   └── registrationEmbeddings.ts
 │   │
-│   └── storage/
-│       ├── database.ts
-│       ├── initDatabase.ts
-│       ├── saveRegistration.ts
-│       ├── getRegistration.ts
-│       └── getAllRegistrations.ts
+│   ├── attendance/
+│   │   └── markAttendance.ts
+│   │
+│   ├── storage/
+│   │   ├── database.ts
+│   │   ├── initDatabase.ts
+│   │   ├── saveRegistration.ts
+│   │   ├── getRegistration.ts
+│   │   ├── saveAttendance.ts
+│   │   ├── getAttendanceLogs.ts
+│   │   ├── syncAttendance.ts
+│   │   ├── markAttendanceAsSynced.ts
+│   │   ├── getTodayAttendance.ts
+│   │   └── resetTodayAttendance.ts
+│   │
+│   └── location/
+│       └── getCurrentLocation.ts
 │
-├── screens/
-│   ├── HomeScreen.tsx
-│   ├── RegistrationScreen.tsx
-│   └── RegistrationCameraScreen.tsx
+├── utils/
+│   ├── benchmark.ts
+│   └── tempFileManager.ts
 │
 └── App.tsx
 ```
 
 ---
 
-# Important Core Components
-
-## Registration Machine
-
-File:
-
-```text
-core/registration/registrationMachine.ts
-```
-
-Responsible for:
-
-* registration stages
-* pose validation
-* user guidance
-* stage transitions
-
----
-
-## Embedding Collector
-
-File:
-
-```text
-core/embeddings/generateEmbedding.ts
-```
-
-Responsible for:
-
-* embedding generation
-* continuous embedding collection
-* future real embedding integration
-
----
-
-## SQLite Layer
-
-Files:
-
-```text
-core/storage/
-```
-
-Responsible for:
-
-* database initialization
-* local persistence
-* retrieval
-* offline registration state
-
----
-
 # Technologies Used
 
-| Technology            | Purpose                |
-| --------------------- | ---------------------- |
-| React Native          | Mobile application     |
-| VisionCamera          | Camera pipeline        |
-| ML Kit Face Detection | Offline face detection |
-| SQLite                | Offline persistence    |
-| TypeScript            | Type safety            |
-| Hermes                | React Native JS engine |
+| Technology            | Purpose                           |
+| --------------------- | --------------------------------- |
+| React Native          | Cross-platform mobile application |
+| VisionCamera          | Camera pipeline                   |
+| ML Kit Face Detection | Offline face detection            |
+| TensorFlow Lite       | On-device AI inference            |
+| MobileFaceNet         | Face embedding generation         |
+| SQLite                | Offline persistence               |
+| NetInfo               | Connectivity monitoring           |
+| react-native-fs       | Temp file lifecycle               |
+| TypeScript            | Type safety                       |
 
 ---
 
 # Current Technical Decisions
+
+## Why MobileFaceNet?
+
+Chosen because:
+
+* lightweight model size
+* mobile optimized inference
+* fast embedding generation
+* low-end device compatibility
+
+---
 
 ## Why SQLite?
 
 SQLite provides:
 
 * offline persistence
+* lightweight deployment
 * fast local retrieval
-* lightweight storage
-* no internet dependency
+* no cloud dependency
 
 Perfect for offline attendance systems.
 
 ---
 
-## Why Continuous Embeddings?
+## Why Embedding Banks?
 
 Instead of storing a single embedding:
 
 * multiple embeddings improve robustness
-* captures different angles
-* improves future authentication accuracy
+* captures real-world variations
+* improves authentication stability
 
 ---
 
-## Why Left / Right Validation?
+## Why Offline-First?
 
-Real-world attendance conditions vary.
+Field environments often:
 
-Multi-angle registration:
+* lack stable internet
+* operate in remote regions
+* require uninterrupted attendance capability
 
-* improves recognition stability
-* reduces pose dependency
-* increases authentication success rate
+Local-first persistence ensures reliability.
 
 ---
 
 # Current Limitations
 
-## Mock Embeddings
-
-Real face embeddings are not implemented yet.
-
-Current embeddings are placeholder vectors.
-
----
-
-## No Authentication Pipeline Yet
-
-Attendance authentication is planned but not implemented.
+* Current sync layer is mocked locally
+* Current liveness validation is basic
+* No encrypted SQLite layer yet
+* Current attendance pipeline uses photo capture
+* Single-user-per-device architecture
 
 ---
 
-## No Real-Time Frame Processing Yet
+# Future Scope
 
-Current implementation:
-
-* captures photos periodically
-* runs ML Kit on captured images
-
-Future versions may use:
-
-* VisionCamera frame processors
-* real-time inference
-
----
-
-# Future Roadmap
-
-## Phase 1 — Current
-
-* Offline registration
-* SQLite persistence
-* Registration pipeline
+* Real-time frame processors
+* Advanced anti-spoofing
+* AWS production backend
+* Background sync services
+* Encrypted biometric storage
+* Enterprise SDK architecture
+* Multi-user organization support
+* Low-end device optimization
 
 ---
 
-## Phase 2
+# Enterprise Integration Possibilities
 
-* Real TFLite embeddings
-* Face cropping pipeline
-* Embedding averaging
+Current implementation exposes:
 
----
+* registration screens
+* attendance screens
+* local persistence layer
+* sync layer
+* authentication pipeline
 
-## Phase 3
+Future enterprise integration can convert these into:
 
-* Cosine similarity matching
-* Offline attendance authentication
+* reusable SDK modules
+* embeddable biometric workflows
+* workforce management integrations
 
----
+Potential future integration APIs:
 
-## Phase 4
+```ts
+FaceAuth.register()
 
-* Realtime frame processing
-* Faster inference pipeline
-* Optimization layer
+FaceAuth.authenticate()
 
----
+FaceAuth.sync()
+```
 
-## Phase 5
-
-* Secure encryption
-* Multi-user support
-* Admin dashboard
-* Sync architecture
+The current modular architecture was intentionally designed to support future enterprise integration without major biometric pipeline rewrites.
 
 ---
 
-# Planned Authentication Flow
+# Installation
 
-```text
-Open Attendance
-        ↓
-Live Face Detection
-        ↓
-Liveness Validation
-        ↓
-Generate Live Embedding
-        ↓
-Fetch Stored Embedding
-        ↓
-Cosine Similarity Match
-        ↓
-Attendance Success / Failure
+## Clone Repository
+
+```bash
+git clone <repository-url>
 ```
 
 ---
 
-# Project Status
+## Install Dependencies
 
-Current status:
-
-## Stable MVP Registration System
-
-Working:
-
-* Camera
-* Face detection
-* Pose validation
-* Registration flow
-* Embedding collection
-* SQLite persistence
-* Retrieval system
-
-Next milestone:
-
-* Real biometric embeddings
+```bash
+npm install
+```
 
 ---
 
-# Author
+# Android Setup
 
-Built as part of an offline-first biometric attendance system hackathon project.
-"""
+## Start Metro
+
+```bash
+npx react-native start
+```
+
+## Run Android
+
+```bash
+npx react-native run-android
+```
+
+---
+
+# Required Permissions
+
+## Android
+
+* Camera
+* Storage
+* Internet
+* Location
+
+
+
+# Conclusion
+
+EdgeAuth demonstrates a practical offline-first biometric attendance architecture optimized for lightweight mobile deployment and real-world field attendance environments.
+
+The system combines:
+
+* on-device AI inference
+* offline persistence
+* adaptive biometric authentication
+* queue-based synchronization
+* modular architecture
+
+while remaining lightweight, privacy-focused, and scalable for future enterprise deployment.
