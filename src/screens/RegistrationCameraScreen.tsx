@@ -3,7 +3,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {View, Text, StyleSheet, Dimensions, Image} from 'react-native';
 import {FACE_CROP_CONFIG} from '../core/embeddings/faceCropConfig';
 import {runRegistrationMachine} from '../core/registration/registrationMachine';
-
+import {registerTempFile, clearTempFiles} from '../utility/tempFileManager';
 import {normalizeDetection} from '../core/detection/normalizeDetection';
 
 import {Camera, useCameraDevice} from 'react-native-vision-camera';
@@ -16,7 +16,7 @@ import {createEmptyEmbeddings} from '../core/registration/registrationEmbeddings
 import {isCentered, isCloseEnough} from '../core/liveness/validators';
 
 import {saveRegistration} from '../core/storage/saveRegistration';
-export default function RegistrationCameraScreen() {
+export default function RegistrationCameraScreen({navigation}: any) {
   const cameraRef = useRef<Camera>(null);
 
   const device = useCameraDevice('front');
@@ -112,7 +112,7 @@ export default function RegistrationCameraScreen() {
         if (!photo?.path) {
           return;
         }
-
+        registerTempFile(photo.path);
         /*
         FACE DETECTION
       */
@@ -248,16 +248,24 @@ export default function RegistrationCameraScreen() {
     };
   }, []);
   useEffect(() => {
-    if (registrationState.stage === 'SUCCESS') {
-      registrationCompletedRef.current = true;
-      console.log('REGISTRATION SUCCESS');
-      console.log('FINAL EMBEDDINGS:', registrationEmbeddings);
-      saveRegistration({
-        uid: 'demo-user',
-        embeddings: registrationEmbeddings.embeddings,
-        registeredAt: Date.now(),
-      });
-    }
+    const handleSuccess = async () => {
+      if (registrationState.stage === 'SUCCESS') {
+        registrationCompletedRef.current = true;
+        console.log('REGISTRATION SUCCESS');
+        // console.log('FINAL EMBEDDINGS:', registrationEmbeddings);
+        await saveRegistration({
+          uid: 'demo-user',
+          embeddings: registrationEmbeddings.embeddings,
+          registeredAt: Date.now(),
+        });
+        await clearTempFiles();
+        setTimeout(() => {
+          navigation.goBack();
+        }, 1500);
+      }
+    };
+
+    handleSuccess();
   }, [registrationState.stage]);
 
   if (!hasPermission) {

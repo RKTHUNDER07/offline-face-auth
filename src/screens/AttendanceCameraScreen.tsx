@@ -13,6 +13,7 @@ import {runAuthMachine} from '../core/auth/authMachine';
 import {normalizeDetection} from '../core/detection/normalizeDetection';
 import {updateAdaptiveEmbeddings} from '../core/embeddings/updateAdaptiveEmbeddings';
 import {generateEmbedding} from '../core/embeddings/generateFixedEmbedding';
+import {registerTempFile, clearTempFiles} from '../utility/tempFileManager';
 
 import {runEmbeddingAuth} from '../core/auth/runEmbeddingAuth';
 
@@ -54,7 +55,7 @@ export default function AttendanceCameraScreen({navigation}: any) {
       const timeout = setTimeout(() => {
         navigation.goBack();
       }, 1500);
-
+      clearTempFiles();
       return () => clearTimeout(timeout);
     }
   }, [authState.phase]);
@@ -244,7 +245,7 @@ export default function AttendanceCameraScreen({navigation}: any) {
 
           enableShutterSound: false,
         });
-
+        registerTempFile(photo.path);
         if (!photo?.path) {
           return;
         }
