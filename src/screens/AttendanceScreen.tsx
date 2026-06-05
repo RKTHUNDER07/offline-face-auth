@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 import {getTodayAttendance} from '../core/storage/getTodayAttendance';
-
+import {getAttendanceLogs} from '../core/storage/getAttendanceLogs';
 import {resetTodayAttendance} from '../core/storage/resetTodayAttendance';
 export default function AttendanceScreen({navigation}: any) {
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
@@ -12,10 +12,36 @@ export default function AttendanceScreen({navigation}: any) {
 
     setTodayAttendance(attendance);
   };
+  const loadSyncStatus = async () => {
+    const pendingLogs = await getAttendanceLogs();
 
+    setPendingSyncCount(pendingLogs.length);
+  };
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+
+  const loadDashboard = async () => {
+    const attendance = await getTodayAttendance();
+
+    setTodayAttendance(attendance);
+
+    const pendingLogs = await getAttendanceLogs();
+
+    setPendingSyncCount(pendingLogs.length);
+  };
   useEffect(() => {
     loadAttendance();
+    loadSyncStatus();
+    loadDashboard();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadDashboard();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', loadAttendance);
 
@@ -36,7 +62,11 @@ export default function AttendanceScreen({navigation}: any) {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Sync Status</Text>
 
-        <Text style={styles.cardValue}>All Synced</Text>
+        <Text style={styles.cardValue}>
+          {pendingSyncCount === 0
+            ? 'All Synced'
+            : `${pendingSyncCount} Pending`}
+        </Text>
       </View>
 
       <TouchableOpacity
