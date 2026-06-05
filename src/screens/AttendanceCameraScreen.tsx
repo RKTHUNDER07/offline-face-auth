@@ -18,7 +18,7 @@ import {registerTempFile, clearTempFiles} from '../utility/tempFileManager';
 import {runEmbeddingAuth} from '../core/auth/runEmbeddingAuth';
 
 import {isCentered} from '../core/liveness/validators';
-
+import {getTodayAttendance} from '../core/storage/getTodayAttendance';
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 export default function AttendanceCameraScreen({navigation}: any) {
@@ -49,17 +49,59 @@ export default function AttendanceCameraScreen({navigation}: any) {
   /*
     SUCCESS NAVIGATION
   */
+  useEffect(() => {
+    const checkTodayAttendance = async () => {
+      const existing = await getTodayAttendance();
+
+      if (existing) {
+        console.log('ATTENDANCE ALREADY MARKED');
+
+        navigation.goBack();
+
+        return;
+      }
+    };
+
+    checkTodayAttendance();
+  }, []);
 
   useEffect(() => {
-    if (authState.phase === 'AUTH_SUCCESS') {
-      const timeout = setTimeout(() => {
-        navigation.goBack();
-      }, 1500);
-      clearTempFiles();
-      return () => clearTimeout(timeout);
-    }
-  }, [authState.phase]);
+    let timeout: NodeJS.Timeout;
 
+    const handleExitFlow = async () => {
+      /*
+        SUCCESS
+      */
+
+      if (authState.phase === 'AUTH_SUCCESS') {
+        await clearTempFiles();
+
+        timeout = setTimeout(() => {
+          navigation.goBack();
+        }, 1500);
+      }
+
+      /*
+        FAILURE
+      */
+
+      if (authState.phase === 'AUTH_FAILED') {
+        await clearTempFiles();
+
+        timeout = setTimeout(() => {
+          navigation.goBack();
+        }, 3000);
+      }
+    };
+
+    handleExitFlow();
+
+    return () => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
+  }, [authState.phase]);
   /*
     EMBEDDING AUTH FLOW
   */
