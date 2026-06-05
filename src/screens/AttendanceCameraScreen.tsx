@@ -11,7 +11,7 @@ import {AuthState} from '../core/auth/authTypes';
 import {runAuthMachine} from '../core/auth/authMachine';
 
 import {normalizeDetection} from '../core/detection/normalizeDetection';
-
+import {updateAdaptiveEmbeddings} from '../core/embeddings/updateAdaptiveEmbeddings';
 import {generateEmbedding} from '../core/embeddings/generateFixedEmbedding';
 
 import {runEmbeddingAuth} from '../core/auth/runEmbeddingAuth';
@@ -128,7 +128,14 @@ export default function AttendanceCameraScreen({navigation}: any) {
       const authResult = await runEmbeddingAuth(embeddingResult.embedding);
 
       console.log('AUTH SCORE:', authResult.score);
+      if (authResult.score > 0.9)
+        await updateAdaptiveEmbeddings({
+          userId: 'demo-user',
 
+          authScore: authResult.score,
+
+          newEmbedding: Array.from(embeddingResult.embedding as Float32Array),
+        });
       /*
           SUCCESS
         */

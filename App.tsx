@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-
+import {purgeAttendanceLogs} from './src/core/storage/purgeAttendanceLogs';
 import {loadEmbeddingModel} from './src/core/embeddings/loadModel';
 import {initDatabase} from './src/core/storage/initDatabase';
 import {NavigationContainer} from '@react-navigation/native';
@@ -39,6 +39,7 @@ function App(): JSX.Element {
         /*
         SYNC ATTENDANCE
       */
+        await purgeAttendanceLogs();
 
         await syncAttendance();
 
