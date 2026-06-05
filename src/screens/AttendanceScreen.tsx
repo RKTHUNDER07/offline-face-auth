@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-
+import {getLastAttendance} from '../core/storage/getLastAttendance';
 import {getTodayAttendance} from '../core/storage/getTodayAttendance';
 import {getAttendanceLogs} from '../core/storage/getAttendanceLogs';
 import {resetTodayAttendance} from '../core/storage/resetTodayAttendance';
@@ -12,6 +12,20 @@ export default function AttendanceScreen({navigation}: any) {
 
     setTodayAttendance(attendance);
   };
+  const formatDateTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleString([], {
+      day: '2-digit',
+
+      month: 'short',
+
+      year: 'numeric',
+
+      hour: '2-digit',
+
+      minute: '2-digit',
+    });
+  };
+  const [lastAttendance, setLastAttendance] = useState<any>(null);
   const loadSyncStatus = async () => {
     const pendingLogs = await getAttendanceLogs();
 
@@ -21,7 +35,9 @@ export default function AttendanceScreen({navigation}: any) {
 
   const loadDashboard = async () => {
     const attendance = await getTodayAttendance();
+    const last = await getLastAttendance();
 
+    setLastAttendance(last);
     setTodayAttendance(attendance);
 
     const pendingLogs = await getAttendanceLogs();
@@ -68,7 +84,15 @@ export default function AttendanceScreen({navigation}: any) {
             : `${pendingSyncCount} Pending`}
         </Text>
       </View>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Last Attendance</Text>
 
+        <Text style={styles.cardValue}>
+          {lastAttendance
+            ? formatDateTime(lastAttendance.timestamp)
+            : 'No Records'}
+        </Text>
+      </View>
       <TouchableOpacity
         disabled={!!todayAttendance}
         style={[

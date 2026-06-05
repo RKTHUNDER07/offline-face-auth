@@ -21,11 +21,11 @@ export default function HomeScreen({navigation}: any) {
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('EmbeddingTest')}>
         <Text style={styles.buttonText}>Test Embeddings</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('Attendance')}>
